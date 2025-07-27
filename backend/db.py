@@ -42,6 +42,8 @@ class MongoDB:
             self.collection.create_index('filename')
             self.collection.create_index('created_at')
             self.collection.create_index('rack_name')
+            self.collection.create_index('producer_name')
+            self.collection.create_index('description')
             
             self.connected = True
             logger.info("Successfully connected to MongoDB")
@@ -75,6 +77,15 @@ class MongoDB:
                     'macro_controls': len(rack_info.get('macro_controls', []))
                 }
             }
+            
+            # Add user info if present
+            if 'user_info' in rack_info:
+                document['user_info'] = rack_info['user_info']
+                # Also add fields at top level for easier searching
+                if 'description' in rack_info['user_info']:
+                    document['description'] = rack_info['user_info']['description']
+                if 'producer_name' in rack_info['user_info']:
+                    document['producer_name'] = rack_info['user_info']['producer_name']
             
             # Optionally store the original file content (base64 encoded)
             if file_content:
@@ -131,11 +142,13 @@ class MongoDB:
                 return []
         
         try:
-            # Search in both rack_name and filename
+            # Search in rack_name, filename, producer_name, and description
             cursor = self.collection.find({
                 '$or': [
                     {'rack_name': {'$regex': query, '$options': 'i'}},
-                    {'filename': {'$regex': query, '$options': 'i'}}
+                    {'filename': {'$regex': query, '$options': 'i'}},
+                    {'producer_name': {'$regex': query, '$options': 'i'}},
+                    {'description': {'$regex': query, '$options': 'i'}}
                 ]
             }).sort('created_at', -1)
             

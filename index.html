@@ -21,12 +21,32 @@
                 <p>Drop .adg files here or click to browse</p>
                 <input type="file" id="file-input" accept=".adg" hidden>
             </div>
+            
+            <div id="user-info-form" class="user-info-form hidden">
+                <h3>Add Rack Information</h3>
+                <div class="form-group">
+                    <label for="rack-description">What does this rack do?</label>
+                    <textarea id="rack-description" rows="4" placeholder="Describe the purpose and functionality of this rack..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="producer-name">Your name or producer name</label>
+                    <input type="text" id="producer-name" placeholder="Enter your name or artist name...">
+                </div>
+                <div class="form-actions">
+                    <button id="skip-info" class="btn btn-secondary">Skip</button>
+                    <button id="submit-info" class="btn btn-primary">Analyze Rack</button>
+                </div>
+            </div>
         </div>
 
         <div id="results-section" class="results-section hidden">
             <div class="rack-info">
                 <h2 id="rack-name"></h2>
                 <div id="rack-stats" class="rack-stats"></div>
+                <div id="user-info-display" class="user-info-display hidden">
+                    <div id="producer-info" class="producer-info"></div>
+                    <div id="description-info" class="description-info"></div>
+                </div>
             </div>
 
             <div id="macro-controls" class="macro-controls hidden">

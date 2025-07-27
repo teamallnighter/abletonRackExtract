@@ -6,6 +6,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const chainsContainer = document.getElementById('chains-container');
     const rackNameElement = document.getElementById('rack-name');
     const rackStatsElement = document.getElementById('rack-stats');
+    const userInfoForm = document.getElementById('user-info-form');
+    const rackDescriptionInput = document.getElementById('rack-description');
+    const producerNameInput = document.getElementById('producer-name');
+    
+    let selectedFile = null;
 
     // Handle file browsing
     dropZone.addEventListener('click', () => fileInput.click());
@@ -32,14 +37,47 @@ document.addEventListener('DOMContentLoaded', function() {
         if (files.length) analyzeFiles(files);
     });
 
-    // Analyze files
+    // Handle file selection
     function analyzeFiles(files) {
-        // Backend expects single file upload
         if (files.length === 0) return;
         
+        selectedFile = files[0];
+        
+        // Hide drop zone and show user info form
+        dropZone.classList.add('hidden');
+        userInfoForm.classList.remove('hidden');
+    }
+    
+    // Handle Skip button
+    document.getElementById('skip-info').addEventListener('click', () => {
+        submitAnalysis();
+    });
+    
+    // Handle Submit button
+    document.getElementById('submit-info').addEventListener('click', () => {
+        submitAnalysis();
+    });
+    
+    // Submit analysis with optional user info
+    function submitAnalysis() {
+        if (!selectedFile) return;
+        
         const formData = new FormData();
-        formData.append('file', files[0]); // Send only the first file as 'file'
+        formData.append('file', selectedFile);
+        
+        // Add user info if provided
+        const description = rackDescriptionInput.value.trim();
+        const producerName = producerNameInput.value.trim();
+        
+        if (description) {
+            formData.append('description', description);
+        }
+        if (producerName) {
+            formData.append('producer_name', producerName);
+        }
 
+        // Hide form and show loading
+        userInfoForm.classList.add('hidden');
         loadingIndicator.classList.remove('hidden');
         resultsSection.classList.add('hidden');
 
@@ -52,33 +90,61 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.error) {
                 alert('Error: ' + data.error);
                 loadingIndicator.classList.add('hidden');
+                dropZone.classList.remove('hidden');
             } else if (data.analysis) {
-                displayResults(data.analysis); // Use the analysis object from response
+                displayResults(data.analysis, data); // Pass full data for additional info
                 loadingIndicator.classList.add('hidden');
                 resultsSection.classList.remove('hidden');
             } else {
                 alert('Invalid response from server');
                 loadingIndicator.classList.add('hidden');
+                dropZone.classList.remove('hidden');
             }
         })
         .catch(error => {
             console.error('Error:', error);
             alert('Failed to analyze file. Is the backend running?');
             loadingIndicator.classList.add('hidden');
+            dropZone.classList.remove('hidden');
         });
     }
 
     // Display results
-    function displayResults(data) {
-        rackNameElement.textContent = data.rack_name || 'Unknown Rack';
+    function displayResults(analysis, fullData) {
+        rackNameElement.textContent = analysis.rack_name || 'Unknown Rack';
+        
+        // Display user info if available
+        const userInfoDisplay = document.getElementById('user-info-display');
+        const producerInfo = document.getElementById('producer-info');
+        const descriptionInfo = document.getElementById('description-info');
+        
+        if (analysis.user_info) {
+            userInfoDisplay.classList.remove('hidden');
+            
+            if (analysis.user_info.producer_name) {
+                producerInfo.textContent = `Created by ${analysis.user_info.producer_name}`;
+                producerInfo.style.display = 'block';
+            } else {
+                producerInfo.style.display = 'none';
+            }
+            
+            if (analysis.user_info.description) {
+                descriptionInfo.textContent = analysis.user_info.description;
+                descriptionInfo.style.display = 'block';
+            } else {
+                descriptionInfo.style.display = 'none';
+            }
+        } else {
+            userInfoDisplay.classList.add('hidden');
+        }
 
         // Handle macros
         const macroControls = document.getElementById('macro-controls');
         const macroList = document.getElementById('macro-list');
         
-        if (data.macro_controls && data.macro_controls.length > 0) {
+        if (analysis.macro_controls && analysis.macro_controls.length > 0) {
             macroControls.classList.remove('hidden');
-            macroList.innerHTML = data.macro_controls.map(macro => `
+            macroList.innerHTML = analysis.macro_controls.map(macro => `
                 <div class="macro-item">
                     <span>${macro.name}</span>
                 </div>
@@ -88,15 +154,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Set rack stats
-        const totalDevices = countAllDevices(data.chains);
+        const totalDevices = countAllDevices(analysis.chains);
         rackStatsElement.innerHTML = `
-            <span>Chains: ${data.chains.length}</span>
+            <span>Chains: ${analysis.chains.length}</span>
             <span>Devices: ${totalDevices}</span>
         `;
 
         // Display chains and devices
         chainsContainer.innerHTML = '';
-        data.chains.forEach(chain => {
+        analysis.chains.forEach(chain => {
             const chainDiv = createChainElement(chain);
             chainsContainer.appendChild(chainDiv);
         });
@@ -174,6 +240,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('analyze-another').addEventListener('click', () => {
         resultsSection.classList.add('hidden');
         fileInput.value = '';
+        selectedFile = null;
+        rackDescriptionInput.value = '';
+        producerNameInput.value = '';
+        dropZone.classList.remove('hidden');
     });
 
     // Handle "Export JSON" button

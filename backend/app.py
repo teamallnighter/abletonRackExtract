@@ -87,6 +87,18 @@ def analyze_rack():
             xml_path = export_xml_to_file(xml_root, filepath, temp_dir)
             json_path = export_analysis_to_json(rack_info, filepath, temp_dir)
             
+            # Get user info from form data
+            description = request.form.get('description', '').strip()
+            producer_name = request.form.get('producer_name', '').strip()
+            
+            # Add user info to rack_info if provided
+            if description or producer_name:
+                rack_info['user_info'] = {}
+                if description:
+                    rack_info['user_info']['description'] = description
+                if producer_name:
+                    rack_info['user_info']['producer_name'] = producer_name
+            
             # Save to MongoDB
             try:
                 # Read the original file content for storage
