@@ -21,9 +21,12 @@ def decompress_and_parse_ableton_file(file_path):
 
 def parse_chains_and_devices(xml_root, filename=None, verbose=False):
     """Parse the main rack structure based on actual Ableton XML format"""
+    # Always use filename as rack name
+    rack_name_from_file = os.path.splitext(os.path.basename(filename))[0] if filename else "Unknown"
+    
     rack_info = {
-        "rack_name": "Unknown",
-        "use_case": os.path.splitext(os.path.basename(filename))[0] if filename else "Unknown",
+        "rack_name": rack_name_from_file,  # Use filename as rack name
+        "use_case": rack_name_from_file,
         "macro_controls": [],
         "chains": []
     }
@@ -37,10 +40,7 @@ def parse_chains_and_devices(xml_root, filename=None, verbose=False):
         main_device = xml_root.find(".//AudioEffectGroupDevice")
     
     if main_device is not None:
-        # Get rack name
-        user_name = main_device.find("UserName")
-        if user_name is not None:
-            rack_info["rack_name"] = user_name.get("Value", "Unknown")
+        # We're no longer overriding with UserName - filename takes precedence
         
         # Parse macro controls
         for i in range(16):

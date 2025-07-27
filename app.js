@@ -81,7 +81,6 @@ document.addEventListener('DOMContentLoaded', function() {
             macroList.innerHTML = data.macro_controls.map(macro => `
                 <div class="macro-item">
                     <span>${macro.name}</span>
-                    <span>${Math.round(macro.value * 100)}%</span>
                 </div>
             `).join('');
         } else {

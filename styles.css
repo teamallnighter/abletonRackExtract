@@ -1,7 +1,7 @@
 /* Global styles */
 :root {
-    --primary: #ee1ab2;
-    --secondary: #1ec8f7;
+    --primary: #ff6b35;
+    --secondary: #f7931e;
     --background: #1a1a1a;
     --surface: #242424;
     --surface-light: #2a2a2a;
@@ -31,7 +31,7 @@ header {
     background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
     padding: 20px 10px;
     text-align: center;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
 }
 
 header h1 {
@@ -127,11 +127,12 @@ main {
 
 .macro-item {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     padding: 8px 12px;
     background: var(--surface);
     border-radius: 4px;
     font-size: 0.9rem;
+    text-align: center;
 }
 
 /* Visualization - WIDE LAYOUT */
@@ -153,16 +154,15 @@ main {
     overflow-y: visible;
 }
 
-/* Chain layout - Horizontal flow */
+/* Chain layout - Each chain on new row */
 .chain {
-    display: inline-block;
-    vertical-align: top;
+    display: block;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 15px;
-    margin: 0 15px 15px 0;
-    min-width: 250px;
+    margin: 0 0 15px 0;
+    width: 100%;
 }
 
 .chain-header {
@@ -212,8 +212,8 @@ main {
 
 .nested-rack .chain {
     background: var(--surface-light);
-    margin: 5px;
-    min-width: 200px;
+    margin: 5px 0;
+    width: calc(100% - 10px);
 }
 
 /* Flow indicators */
@@ -279,9 +279,7 @@ main {
 }
 
 @keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
+    to { transform: rotate(360deg); }
 }
 
 /* Utility classes */
@@ -295,7 +293,7 @@ main {
         width: 100%;
         padding: 0 5px;
     }
-
+    
     .chain {
         min-width: 100%;
         margin-right: 0;
