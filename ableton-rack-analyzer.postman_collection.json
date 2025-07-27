@@ -1,0 +1,206 @@
+{
+  "info": {
+    "name": "Ableton Rack Analyzer API",
+    "description": "API for analyzing Ableton Live rack files and storing results in MongoDB",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5001",
+      "type": "string",
+      "description": "Base URL for the API (change to production URL when deployed)"
+    },
+    {
+      "key": "rackId",
+      "value": "",
+      "type": "string",
+      "description": "MongoDB ObjectId of a rack (set after analyzing a rack)"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "health"]
+        },
+        "description": "Check if the API is running and healthy"
+      },
+      "response": []
+    },
+    {
+      "name": "Analyze Rack",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "description": "Ableton rack file (.adg or .adv)"
+            },
+            {
+              "key": "description",
+              "value": "This rack creates amazing glitch effects with beat repeat and filters",
+              "type": "text",
+              "description": "Description of what the rack does (optional)"
+            },
+            {
+              "key": "producer_name",
+              "value": "DJ Example",
+              "type": "text",
+              "description": "Your name or producer name (optional)"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/analyze",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "analyze"]
+        },
+        "description": "Upload and analyze an Ableton rack file. Optionally include description and producer name."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Save rack_id for use in other requests",
+              "if (pm.response.code === 200) {",
+              "    const jsonData = pm.response.json();",
+              "    if (jsonData.rack_id) {",
+              "        pm.collectionVariables.set(\"rackId\", jsonData.rack_id);",
+              "        console.log(\"Saved rack_id: \" + jsonData.rack_id);",
+              "    }",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Recent Racks",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/racks?limit=10",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "racks"],
+          "query": [
+            {
+              "key": "limit",
+              "value": "10",
+              "description": "Number of racks to return (default: 10)"
+            }
+          ]
+        },
+        "description": "Get recently analyzed racks from the database"
+      },
+      "response": []
+    },
+    {
+      "name": "Get Rack by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/racks/{{rackId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "racks", "{{rackId}}"]
+        },
+        "description": "Get a specific rack analysis by its MongoDB ID"
+      },
+      "response": []
+    },
+    {
+      "name": "Search Racks",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/racks/search?q=glitch",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "racks", "search"],
+          "query": [
+            {
+              "key": "q",
+              "value": "glitch",
+              "description": "Search query (searches in rack_name, filename, producer_name, and description)"
+            }
+          ]
+        },
+        "description": "Search for racks by name, filename, producer name, or description"
+      },
+      "response": []
+    },
+    {
+      "name": "Download XML",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/download/xml/MyRack.xml",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "download", "xml", "MyRack.xml"]
+        },
+        "description": "Download the XML file generated during analysis. Replace 'MyRack.xml' with the actual filename from the analyze response."
+      },
+      "response": []
+    },
+    {
+      "name": "Download JSON Analysis",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/download/json/MyRack_analysis.json",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "download", "json", "MyRack_analysis.json"]
+        },
+        "description": "Download the JSON analysis file generated during analysis. Replace 'MyRack_analysis.json' with the actual filename from the analyze response."
+      },
+      "response": []
+    },
+    {
+      "name": "Cleanup Temporary Files",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/cleanup",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "cleanup"]
+        },
+        "description": "Clean up all temporary files on the server (maintenance endpoint)"
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ]
+}
