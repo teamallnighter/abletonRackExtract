@@ -8,14 +8,22 @@ import sys
 import json
 import tempfile
 import shutil
+import logging
 from pathlib import Path
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Add parent directory to path to import the analyzer modules
 sys.path.append(str(Path(__file__).parent.parent.parent))
 from abletonRackAnalyzer import decompress_and_parse_ableton_file, parse_chains_and_devices, export_xml_to_file, export_analysis_to_json
+
+# Import MongoDB helper
+from db import db
 
 app = Flask(__name__, static_folder='..', static_url_path='')
 CORS(app)  # Enable CORS for all routes
@@ -79,6 +87,21 @@ def analyze_rack():
             xml_path = export_xml_to_file(xml_root, filepath, temp_dir)
             json_path = export_analysis_to_json(rack_info, filepath, temp_dir)
             
+            # Save to MongoDB
+            try:
+                # Read the original file content for storage
+                with open(filepath, 'rb') as f:
+                    file_content = f.read()
+                
+                rack_id = db.save_rack_analysis(rack_info, filename, file_content)
+                if rack_id:
+                    logger.info(f"Saved rack analysis to MongoDB with ID: {rack_id}")
+                else:
+                    logger.warning("Failed to save rack analysis to MongoDB")
+            except Exception as e:
+                logger.error(f"Error saving to MongoDB: {e}")
+                # Don't fail the request if MongoDB save fails
+            
             # Prepare response data
             response_data = {
                 'success': True,
@@ -90,6 +113,10 @@ def analyze_rack():
                     'macro_controls': len(rack_info.get('macro_controls', []))
                 }
             }
+            
+            # Add MongoDB ID if available
+            if 'rack_id' in locals() and rack_id:
+                response_data['rack_id'] = rack_id
             
             # Store paths for download endpoints
             response_data['download_ids'] = {
@@ -133,6 +160,53 @@ def download_file(file_type, filename):
         
     except Exception as e:
         return jsonify({'error': f'Download failed: {str(e)}'}), 500
+
+@app.route('/api/racks', methods=['GET'])
+def get_recent_racks():
+    """Get recently analyzed racks from MongoDB"""
+    try:
+        limit = request.args.get('limit', 10, type=int)
+        racks = db.get_recent_racks(limit)
+        return jsonify({
+            'success': True,
+            'racks': racks,
+            'count': len(racks)
+        }), 200
+    except Exception as e:
+        return jsonify({'error': f'Failed to get racks: {str(e)}'}), 500
+
+@app.route('/api/racks/<rack_id>', methods=['GET'])
+def get_rack_by_id(rack_id):
+    """Get a specific rack analysis by ID"""
+    try:
+        rack = db.get_rack_analysis(rack_id)
+        if rack:
+            return jsonify({
+                'success': True,
+                'rack': rack
+            }), 200
+        else:
+            return jsonify({'error': 'Rack not found'}), 404
+    except Exception as e:
+        return jsonify({'error': f'Failed to get rack: {str(e)}'}), 500
+
+@app.route('/api/racks/search', methods=['GET'])
+def search_racks():
+    """Search racks by name or filename"""
+    try:
+        query = request.args.get('q', '')
+        if not query:
+            return jsonify({'error': 'Search query required'}), 400
+        
+        racks = db.search_racks(query)
+        return jsonify({
+            'success': True,
+            'racks': racks,
+            'count': len(racks),
+            'query': query
+        }), 200
+    except Exception as e:
+        return jsonify({'error': f'Search failed: {str(e)}'}), 500
 
 @app.route('/api/cleanup', methods=['POST'])
 def cleanup():
