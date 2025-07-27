@@ -9,8 +9,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const userInfoForm = document.getElementById('user-info-form');
     const rackDescriptionInput = document.getElementById('rack-description');
     const producerNameInput = document.getElementById('producer-name');
+    const tagInput = document.getElementById('tag-input');
+    const selectedTagsDiv = document.getElementById('selected-tags');
+    const tagSuggestionsDiv = document.getElementById('tag-suggestions');
     
     let selectedFile = null;
+    let selectedTags = [];
+    let popularTags = [];
+    let currentSuggestionIndex = -1;
 
     // Handle file browsing
     dropZone.addEventListener('click', () => fileInput.click());
@@ -75,6 +81,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (producerName) {
             formData.append('producer_name', producerName);
         }
+        
+        // Add tags if any selected
+        if (selectedTags.length > 0) {
+            formData.append('tags', JSON.stringify(selectedTags));
+        }
 
         // Hide form and show loading
         userInfoForm.classList.add('hidden');
@@ -117,6 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const userInfoDisplay = document.getElementById('user-info-display');
         const producerInfo = document.getElementById('producer-info');
         const descriptionInfo = document.getElementById('description-info');
+        const tagsDisplay = document.getElementById('tags-display');
         
         if (analysis.user_info) {
             userInfoDisplay.classList.remove('hidden');
@@ -133,6 +145,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 descriptionInfo.style.display = 'block';
             } else {
                 descriptionInfo.style.display = 'none';
+            }
+            
+            if (analysis.user_info.tags && analysis.user_info.tags.length > 0) {
+                tagsDisplay.innerHTML = analysis.user_info.tags.map(tag => 
+                    `<span class="tag">${tag}</span>`
+                ).join('');
+                tagsDisplay.style.display = 'flex';
+            } else {
+                tagsDisplay.style.display = 'none';
             }
         } else {
             userInfoDisplay.classList.add('hidden');
@@ -243,6 +264,8 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedFile = null;
         rackDescriptionInput.value = '';
         producerNameInput.value = '';
+        selectedTags = [];
+        renderTags();
         dropZone.classList.remove('hidden');
     });
 
@@ -259,4 +282,173 @@ document.addEventListener('DOMContentLoaded', function() {
         a.download = 'rack-analysis.json';
         a.click();
     });
+    
+    // Tag System Functions
+    function initTagSystem() {
+        // Load popular tags on startup
+        loadPopularTags();
+        
+        // Handle tag input
+        tagInput.addEventListener('input', handleTagInput);
+        tagInput.addEventListener('keydown', handleTagKeydown);
+        tagInput.addEventListener('focus', () => {
+            if (tagInput.value.trim()) {
+                showTagSuggestions(tagInput.value);
+            }
+        });
+        tagInput.addEventListener('blur', () => {
+            // Delay to allow clicking on suggestions
+            setTimeout(() => tagSuggestionsDiv.classList.add('hidden'), 200);
+        });
+        
+        // Handle clicking on popular tags
+        document.querySelectorAll('.tag-suggestion').forEach(tag => {
+            tag.addEventListener('click', () => {
+                addTag(tag.dataset.tag);
+            });
+        });
+    }
+    
+    function loadPopularTags() {
+        // Fetch popular tags from API
+        fetch('/api/tags/popular')
+            .then(response => response.json())
+            .then(data => {
+                if (data.tags) {
+                    popularTags = data.tags;
+                }
+            })
+            .catch(() => {
+                // Use default popular tags if API fails
+                popularTags = [
+                    { name: 'mixing', count: 0 },
+                    { name: 'mastering', count: 0 },
+                    { name: 'reverb', count: 0 },
+                    { name: 'delay', count: 0 },
+                    { name: 'distortion', count: 0 },
+                    { name: 'eq', count: 0 },
+                    { name: 'compression', count: 0 },
+                    { name: 'stereo-width', count: 0 },
+                    { name: 'resampling', count: 0 },
+                    { name: 'glitch', count: 0 }
+                ];
+            });
+    }
+    
+    function handleTagInput(e) {
+        const value = e.target.value.trim();
+        if (value) {
+            showTagSuggestions(value);
+        } else {
+            tagSuggestionsDiv.classList.add('hidden');
+        }
+    }
+    
+    function handleTagKeydown(e) {
+        const suggestions = tagSuggestionsDiv.querySelectorAll('.tag-suggestion-item');
+        
+        switch(e.key) {
+            case 'Enter':
+                e.preventDefault();
+                if (currentSuggestionIndex >= 0 && suggestions[currentSuggestionIndex]) {
+                    const tagName = suggestions[currentSuggestionIndex].dataset.tag;
+                    addTag(tagName);
+                } else if (tagInput.value.trim()) {
+                    addTag(tagInput.value.trim());
+                }
+                break;
+                
+            case 'ArrowDown':
+                e.preventDefault();
+                currentSuggestionIndex = Math.min(currentSuggestionIndex + 1, suggestions.length - 1);
+                updateSuggestionSelection(suggestions);
+                break;
+                
+            case 'ArrowUp':
+                e.preventDefault();
+                currentSuggestionIndex = Math.max(currentSuggestionIndex - 1, -1);
+                updateSuggestionSelection(suggestions);
+                break;
+                
+            case 'Escape':
+                tagSuggestionsDiv.classList.add('hidden');
+                currentSuggestionIndex = -1;
+                break;
+        }
+    }
+    
+    function updateSuggestionSelection(suggestions) {
+        suggestions.forEach((item, index) => {
+            if (index === currentSuggestionIndex) {
+                item.classList.add('selected');
+            } else {
+                item.classList.remove('selected');
+            }
+        });
+    }
+    
+    function showTagSuggestions(query) {
+        // Filter existing tags and popular tags
+        const lowerQuery = query.toLowerCase();
+        const suggestions = popularTags
+            .filter(tag => tag.name.toLowerCase().includes(lowerQuery) && !selectedTags.includes(tag.name))
+            .slice(0, 5);
+        
+        if (suggestions.length > 0) {
+            tagSuggestionsDiv.innerHTML = suggestions.map((tag, index) => `
+                <div class="tag-suggestion-item" data-tag="${tag.name}" data-index="${index}">
+                    ${tag.name}
+                    ${tag.count > 0 ? `<span class="tag-count">${tag.count}</span>` : ''}
+                </div>
+            `).join('');
+            
+            // Add click handlers
+            tagSuggestionsDiv.querySelectorAll('.tag-suggestion-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    addTag(item.dataset.tag);
+                });
+            });
+            
+            tagSuggestionsDiv.classList.remove('hidden');
+        } else {
+            tagSuggestionsDiv.classList.add('hidden');
+        }
+        
+        currentSuggestionIndex = -1;
+    }
+    
+    function addTag(tagName) {
+        const normalizedTag = tagName.trim().toLowerCase();
+        if (normalizedTag && !selectedTags.includes(normalizedTag)) {
+            selectedTags.push(normalizedTag);
+            renderTags();
+        }
+        tagInput.value = '';
+        tagSuggestionsDiv.classList.add('hidden');
+        currentSuggestionIndex = -1;
+    }
+    
+    function removeTag(tagName) {
+        selectedTags = selectedTags.filter(tag => tag !== tagName);
+        renderTags();
+    }
+    
+    function renderTags() {
+        selectedTagsDiv.innerHTML = selectedTags.map(tag => `
+            <span class="tag">
+                ${tag}
+                <span class="remove-tag" data-tag="${tag}">×</span>
+            </span>
+        `).join('');
+        
+        // Add remove handlers
+        selectedTagsDiv.querySelectorAll('.remove-tag').forEach(btn => {
+            btn.addEventListener('click', () => {
+                removeTag(btn.dataset.tag);
+            });
+        });
+    }
+    
+    // Initialize tag system
+    initTagSystem();
 });

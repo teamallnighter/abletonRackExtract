@@ -44,6 +44,7 @@ class MongoDB:
             self.collection.create_index('rack_name')
             self.collection.create_index('producer_name')
             self.collection.create_index('description')
+            self.collection.create_index('tags')
             
             self.connected = True
             logger.info("Successfully connected to MongoDB")
@@ -86,6 +87,8 @@ class MongoDB:
                     document['description'] = rack_info['user_info']['description']
                 if 'producer_name' in rack_info['user_info']:
                     document['producer_name'] = rack_info['user_info']['producer_name']
+                if 'tags' in rack_info['user_info']:
+                    document['tags'] = rack_info['user_info']['tags']
             
             # Optionally store the original file content (base64 encoded)
             if file_content:
@@ -170,6 +173,55 @@ class MongoDB:
                 if 'chains' in device:
                     count += self._count_all_devices(device['chains'])
         return count
+    
+    def get_popular_tags(self, limit=20):
+        """Get most popular tags with usage count"""
+        if not self.connected:
+            if not self.connect():
+                return []
+        
+        try:
+            # Aggregate to count tag usage
+            pipeline = [
+                {"$unwind": "$tags"},
+                {"$group": {
+                    "_id": "$tags",
+                    "count": {"$sum": 1}
+                }},
+                {"$sort": {"count": -1}},
+                {"$limit": limit},
+                {"$project": {
+                    "name": "$_id",
+                    "count": 1,
+                    "_id": 0
+                }}
+            ]
+            
+            result = list(self.collection.aggregate(pipeline))
+            return result
+        except Exception as e:
+            logger.error(f"Failed to get popular tags: {e}")
+            return []
+    
+    def search_by_tags(self, tags):
+        """Search racks that have any of the specified tags"""
+        if not self.connected:
+            if not self.connect():
+                return []
+        
+        try:
+            cursor = self.collection.find({
+                'tags': {'$in': tags}
+            }).sort('created_at', -1)
+            
+            racks = []
+            for doc in cursor:
+                doc['_id'] = str(doc['_id'])
+                racks.append(doc)
+            return racks
+        except Exception as e:
+            logger.error(f"Failed to search by tags: {e}")
+            return []
     
     def close(self):
         """Close MongoDB connection"""

@@ -90,14 +90,23 @@ def analyze_rack():
             # Get user info from form data
             description = request.form.get('description', '').strip()
             producer_name = request.form.get('producer_name', '').strip()
+            tags_json = request.form.get('tags', '[]')
+            
+            # Parse tags
+            try:
+                tags = json.loads(tags_json) if tags_json else []
+            except:
+                tags = []
             
             # Add user info to rack_info if provided
-            if description or producer_name:
+            if description or producer_name or tags:
                 rack_info['user_info'] = {}
                 if description:
                     rack_info['user_info']['description'] = description
                 if producer_name:
                     rack_info['user_info']['producer_name'] = producer_name
+                if tags:
+                    rack_info['user_info']['tags'] = tags
             
             # Save to MongoDB
             try:
@@ -202,23 +211,88 @@ def get_rack_by_id(rack_id):
     except Exception as e:
         return jsonify({'error': f'Failed to get rack: {str(e)}'}), 500
 
-@app.route('/api/racks/search', methods=['GET'])
+@app.route('/api/racks/search', methods=['GET', 'POST'])
 def search_racks():
-    """Search racks by name or filename"""
+    """Search racks by name, filename, and optionally tags"""
     try:
-        query = request.args.get('q', '')
-        if not query:
-            return jsonify({'error': 'Search query required'}), 400
+        # Support both GET (text only) and POST (text + tags)
+        if request.method == 'GET':
+            query = request.args.get('q', '')
+            if not query:
+                return jsonify({'error': 'Search query required'}), 400
+            
+            racks = db.search_racks(query)
+            return jsonify({
+                'success': True,
+                'racks': racks,
+                'count': len(racks),
+                'query': query
+            }), 200
+        else:  # POST
+            data = request.get_json()
+            query = data.get('query', '')
+            tags = data.get('tags', [])
+            
+            if not query and not tags:
+                return jsonify({'error': 'Either query or tags required'}), 400
+            
+            # If we have both query and tags, we need to combine the results
+            if query and tags:
+                # Get text search results
+                text_results = db.search_racks(query)
+                # Get tag search results
+                tag_results = db.search_by_tags(tags)
+                
+                # Find intersection (racks that match both criteria)
+                text_ids = {str(r['_id']) for r in text_results}
+                tag_ids = {str(r['_id']) for r in tag_results}
+                matching_ids = text_ids.intersection(tag_ids)
+                
+                # Filter to only matching racks
+                racks = [r for r in text_results if str(r['_id']) in matching_ids]
+            elif query:
+                racks = db.search_racks(query)
+            else:  # tags only
+                racks = db.search_by_tags(tags)
+            
+            return jsonify({
+                'success': True,
+                'racks': racks,
+                'count': len(racks),
+                'query': query,
+                'tags': tags
+            }), 200
+    except Exception as e:
+        return jsonify({'error': f'Search failed: {str(e)}'}), 500
+
+@app.route('/api/tags/popular', methods=['GET'])
+def get_popular_tags():
+    """Get popular tags for auto-suggestions"""
+    try:
+        tags = db.get_popular_tags(limit=20)
+        return jsonify({'success': True, 'tags': tags}), 200
+    except Exception as e:
+        return jsonify({'error': f'Failed to get popular tags: {str(e)}'}), 500
+
+@app.route('/api/racks/by-tags', methods=['POST'])
+def search_by_tags():
+    """Search racks by tags"""
+    try:
+        data = request.get_json()
+        tags = data.get('tags', [])
         
-        racks = db.search_racks(query)
+        if not tags:
+            return jsonify({'error': 'No tags provided'}), 400
+        
+        racks = db.search_by_tags(tags)
         return jsonify({
             'success': True,
             'racks': racks,
             'count': len(racks),
-            'query': query
+            'tags': tags
         }), 200
     except Exception as e:
-        return jsonify({'error': f'Search failed: {str(e)}'}), 500
+        return jsonify({'error': f'Tag search failed: {str(e)}'}), 500
 
 @app.route('/api/cleanup', methods=['POST'])
 def cleanup():
