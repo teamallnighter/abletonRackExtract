@@ -755,7 +755,7 @@
                 document.getElementById('modal-rack-name').textContent = rack.rack_name || rack.filename;
                 document.getElementById('modal-producer').textContent = rack.user_info?.producer_name || 'Unknown';
                 document.getElementById('modal-date').textContent = new Date(rack.created_at).toLocaleDateString();
-                document.getElementById('modal-type').textContent = rack.analysis?.type || 'Audio Effect Rack';
+                document.getElementById('modal-type').textContent = rack.analysis?.rack_type || 'Audio Effect Rack';
                 document.getElementById('modal-description').textContent = rack.user_info?.description || 'No description provided';
                 
                 // Render tags
@@ -772,9 +772,9 @@
                     tagsContainer.innerHTML = '';
                 }
                 
-                // Update stats
+                // Update stats - use pre-calculated stats or calculate from analysis
                 const chains = rack.analysis?.chains || [];
-                const totalDevices = chains.reduce((sum, chain) => sum + (chain.devices?.length || 0), 0);
+                const totalDevices = rack.stats?.total_devices || chains.reduce((sum, chain) => sum + (chain.devices?.length || 0), 0);
                 const macros = rack.analysis?.macro_controls || [];
                 
                 document.getElementById('stat-chains').textContent = chains.length;
