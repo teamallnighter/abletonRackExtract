@@ -572,6 +572,7 @@
         let selectedTags = new Set();
         let popularTags = [];
         let currentSearchQuery = '';
+        let currentRackData = null;
 
         // DOM elements
         const searchInput = document.getElementById('search-input');
@@ -732,11 +733,8 @@
             }).join('');
         }
 
-        // Store current rack data for download
-        let currentRackData = null;
-        
-        // View rack details
-        async function viewRack(rackId) {
+        // View rack details (made global for onclick)
+        window.viewRack = async function(rackId) {
             try {
                 // Fetch rack details
                 const response = await fetch(`/api/racks/${rackId}`);
@@ -850,15 +848,15 @@
             `).join('');
         }
         
-        // Close modal
-        function closeModal() {
+        // Close modal (made global for onclick)
+        window.closeModal = function() {
             document.getElementById('rack-modal').style.display = 'none';
             document.body.style.overflow = 'auto';
             currentRackData = null;
         }
         
-        // Download JSON
-        function downloadJSON() {
+        // Download JSON (made global for onclick)
+        window.downloadJSON = function() {
             if (!currentRackData) return;
             
             const dataStr = JSON.stringify(currentRackData, null, 2);
