@@ -601,8 +601,8 @@
         // Render filter tags
         function renderFilterTags() {
             filterTagsContainer.innerHTML = popularTags.map(tag => `
-                <div class="filter-tag" data-tag="${tag.tag}">
-                    ${tag.tag} (${tag.count})
+                <div class="filter-tag" data-tag="${tag.name}">
+                    ${tag.name} (${tag.count})
                 </div>
             `).join('');
             
@@ -709,7 +709,7 @@
             noResults.classList.add('hidden');
             resultsCount.textContent = `${racks.length} rack${racks.length !== 1 ? 's' : ''} found`;
             
-            rackGrid.innerHTML = racks.map(rack => {
+                rackGrid.innerHTML = racks.map(rack => {
                 const userInfo = rack.user_info || {};
                 const tags = rack.tags || userInfo.tags || [];
                 const description = userInfo.description || 'No description provided';
@@ -718,7 +718,7 @@
                 
                 return `
                     <div class="rack-card" onclick="viewRack('${rack._id}')">
-                        <h3>${rack.name || rack.filename}</h3>
+                        <h3>${rack.rack_name || rack.filename}</h3>
                         <div class="rack-card-meta">
                             by ${producer} • ${date}
                         </div>
@@ -748,11 +748,14 @@
                 const rack = data.rack;
                 currentRackData = rack;
                 
+                // Debug: Log the rack structure
+                console.log('Rack data structure:', rack);
+                
                 // Update modal content
-                document.getElementById('modal-rack-name').textContent = rack.name || rack.filename;
+                document.getElementById('modal-rack-name').textContent = rack.rack_name || rack.filename;
                 document.getElementById('modal-producer').textContent = rack.user_info?.producer_name || 'Unknown';
                 document.getElementById('modal-date').textContent = new Date(rack.created_at).toLocaleDateString();
-                document.getElementById('modal-type').textContent = rack.type || 'Audio Effect Rack';
+                document.getElementById('modal-type').textContent = rack.analysis?.type || 'Audio Effect Rack';
                 document.getElementById('modal-description').textContent = rack.user_info?.description || 'No description provided';
                 
                 // Render tags
@@ -770,9 +773,9 @@
                 }
                 
                 // Update stats
-                const chains = rack.chains || [];
+                const chains = rack.analysis?.chains || [];
                 const totalDevices = chains.reduce((sum, chain) => sum + (chain.devices?.length || 0), 0);
-                const macros = rack.macro_controls || [];
+                const macros = rack.analysis?.macro_controls || [];
                 
                 document.getElementById('stat-chains').textContent = chains.length;
                 document.getElementById('stat-devices').textContent = totalDevices;
