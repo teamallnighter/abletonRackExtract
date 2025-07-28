@@ -123,6 +123,7 @@
                 </div>
                 
                 <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="downloadADG()">Download .adg</button>
                     <button class="btn btn-secondary" onclick="downloadJSON()">Download JSON</button>
                     <button class="btn btn-primary" onclick="closeModal()">Close</button>
                 </div>
@@ -419,6 +420,17 @@
             document.getElementById('rack-modal').style.display = 'none';
             document.body.style.overflow = 'auto';
             currentRackData = null;
+        }
+        
+        // Download ADG file (made global for onclick)
+        window.downloadADG = function() {
+            if (!currentRackData || !currentRackData._id) return;
+            
+            // Create a link to trigger the download
+            const link = document.createElement('a');
+            link.href = `/api/racks/${currentRackData._id}/download`;
+            link.download = currentRackData.filename || 'rack.adg';
+            link.click();
         }
         
         // Download JSON (made global for onclick)

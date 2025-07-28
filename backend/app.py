@@ -294,6 +294,39 @@ def search_by_tags():
     except Exception as e:
         return jsonify({'error': f'Tag search failed: {str(e)}'}), 500
 
+@app.route('/api/racks/<rack_id>/download', methods=['GET'])
+def download_rack_file(rack_id):
+    """Download the original .adg file for a rack"""
+    try:
+        # Get rack from database
+        rack = db.get_rack_analysis(rack_id)
+        if not rack:
+            return jsonify({'error': 'Rack not found'}), 404
+        
+        # Check if file content exists
+        if 'file_content' not in rack:
+            return jsonify({'error': 'Original file not available'}), 404
+        
+        # Decode the base64 content
+        import base64
+        file_content = base64.b64decode(rack['file_content'])
+        
+        # Get the original filename
+        filename = rack.get('filename', 'rack.adg')
+        
+        # Create a temporary file
+        import io
+        return send_file(
+            io.BytesIO(file_content),
+            mimetype='application/octet-stream',
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except Exception as e:
+        logger.error(f"Failed to download rack file: {e}")
+        return jsonify({'error': f'Download failed: {str(e)}'}), 500
+
 @app.route('/api/cleanup', methods=['POST'])
 def cleanup():
     """Clean up temporary files"""
