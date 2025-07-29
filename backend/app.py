@@ -41,6 +41,16 @@ def serve_index():
     """Serve the main index.html"""
     return app.send_static_file('index.html')
 
+@app.route('/search')
+def serve_search():
+    """Serve the search page"""
+    return app.send_static_file('search.html')
+
+@app.route('/rack/<rack_id>')
+def serve_rack_page(rack_id):
+    """Serve the individual rack page"""
+    return app.send_static_file('rack.html')
+
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""

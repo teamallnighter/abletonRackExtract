@@ -124,6 +124,17 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayResults(analysis, fullData) {
         rackNameElement.textContent = analysis.rack_name || 'Unknown Rack';
         
+        // Handle View Rack button
+        const viewRackBtn = document.getElementById('view-rack');
+        if (fullData && fullData.rack_id) {
+            viewRackBtn.classList.remove('hidden');
+            viewRackBtn.onclick = () => {
+                window.location.href = `/rack/${fullData.rack_id}`;
+            };
+        } else {
+            viewRackBtn.classList.add('hidden');
+        }
+        
         // Display user info if available
         const userInfoDisplay = document.getElementById('user-info-display');
         const producerInfo = document.getElementById('producer-info');
