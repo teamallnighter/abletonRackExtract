@@ -96,6 +96,12 @@
     <script>
         let currentRackData = null;
         
+        // Helper function to format rack names (replace underscores with spaces)
+        function formatRackName(name) {
+            if (!name) return name;
+            return name.replace(/_/g, ' ');
+        }
+        
         // Get rack ID from URL
         function getRackId() {
             const pathParts = window.location.pathname.split('/');
@@ -118,11 +124,12 @@
                 const rack = data.rack;
                 currentRackData = rack;
                 
-                // Update page title
-                document.title = `${rack.rack_name || rack.filename} - Ableton Rack Analyzer`;
+                // Update page title with formatted name
+                const displayName = formatRackName(rack.rack_name || rack.filename);
+                document.title = `${displayName} - Ableton Rack Analyzer`;
                 
-                // Update rack content
-                document.getElementById('rack-name').textContent = rack.rack_name || rack.filename;
+                // Update rack content with formatted name
+                document.getElementById('rack-name').textContent = displayName;
                 document.getElementById('producer').textContent = rack.user_info?.producer_name || 'Unknown';
                 document.getElementById('date').textContent = new Date(rack.created_at).toLocaleDateString();
                 document.getElementById('type').textContent = rack.analysis?.rack_type || 'Audio Effect Rack';
@@ -221,8 +228,7 @@
             
             container.innerHTML = macros.map((macro, index) => `
                 <div class="macro-item">
-                    <div class="macro-name">Macro ${index + 1}: ${macro.name || 'Unnamed'}</div>
-                    <div class="macro-value">Value: ${macro.value !== undefined ? macro.value : 'N/A'}</div>
+                    <span>Macro ${index + 1}: ${macro.name || 'Unnamed'}</span>
                 </div>
             `).join('');
         }

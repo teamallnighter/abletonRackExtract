@@ -120,9 +120,15 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Helper function to format rack names (replace underscores with spaces)
+    function formatRackName(name) {
+        if (!name) return name;
+        return name.replace(/_/g, ' ');
+    }
+    
     // Display results
     function displayResults(analysis, fullData) {
-        rackNameElement.textContent = analysis.rack_name || 'Unknown Rack';
+        rackNameElement.textContent = formatRackName(analysis.rack_name || 'Unknown Rack');
         
         // Handle View Rack button
         const viewRackBtn = document.getElementById('view-rack');

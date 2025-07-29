@@ -61,6 +61,12 @@
     </main>
 
     <script>
+        // Helper function to format rack names (replace underscores with spaces)
+        function formatRackName(name) {
+            if (!name) return name;
+            return name.replace(/_/g, ' ');
+        }
+        
         // State management
         let selectedTags = new Set();
         let popularTags = [];
@@ -210,7 +216,7 @@
                 
                 return `
                     <div class="rack-card" onclick="viewRack('${rack._id}')">
-                        <h3>${rack.rack_name || rack.filename}</h3>
+                        <h3>${formatRackName(rack.rack_name || rack.filename)}</h3>
                         <div class="rack-card-meta">
                             by ${producer} • ${date}
                         </div>
