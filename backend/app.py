@@ -16,6 +16,9 @@ from werkzeug.utils import secure_filename
 import jwt
 from functools import wraps
 import secrets
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from security import validate_password, validate_email, sanitize_username
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -29,13 +32,44 @@ from abletonRackAnalyzer import decompress_and_parse_ableton_file, parse_chains_
 from db import db
 
 app = Flask(__name__, static_folder='..', static_url_path='')
-CORS(app)  # Enable CORS for all routes
+
+# Configure CORS with more restrictive settings
+CORS(app, resources={
+    r"/api/*": {
+        "origins": os.getenv('ALLOWED_ORIGINS', '*').split(','),
+        "methods": ["GET", "POST"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
+
+limiter = Limiter(get_remote_address, app=app, default_limits=["200 per day", "50 per hour"])
 
 # Configuration
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['UPLOAD_FOLDER'] = tempfile.mkdtemp()
 app.config['SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', secrets.token_hex(32))
+app.config['SESSION_COOKIE_SECURE'] = True  # Only send cookies over HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access to cookies
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF protection
 ALLOWED_EXTENSIONS = {'adg', 'adv'}
+
+# Security headers middleware
+@app.after_request
+def set_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['Content-Security-Policy'] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "  # We'll need unsafe-inline for now, can refactor later
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data:; "
+        "font-src 'self'; "
+        "connect-src 'self'; "
+        "frame-ancestors 'none';"
+    )
+    return response
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -50,7 +84,7 @@ def token_required(f):
         if 'Authorization' in request.headers:
             auth_header = request.headers['Authorization']
             try:
-                token = auth_header.split(' ')[1]  # Bearer <token>
+                token = auth_header.split(' ')[1]  # Bearer ctokene
             except IndexError:
                 pass
         
@@ -419,27 +453,27 @@ def cleanup():
 
 # Authentication Routes
 @app.route('/api/register', methods=['POST'])
+@limiter.limit("5 per hour")
 def register():
     """Register a new user"""
     try:
         data = request.get_json()
         
         # Validate input
-        username = data.get('username', '').strip()
+        username = sanitize_username(data.get('username', '').strip())
         email = data.get('email', '').strip()
         password = data.get('password', '')
         
         if not username or not email or not password:
-            return jsonify({'error': 'Username, email and password are required'}), 400
+            return jsonify({'error': 'Username, email, and password are required'}), 400
         
-        if len(username) < 3:
-            return jsonify({'error': 'Username must be at least 3 characters'}), 400
+        email_valid, email_error = validate_email(email)
+        if not email_valid:
+            return jsonify({'error': email_error}), 400
         
-        if len(password) < 6:
-            return jsonify({'error': 'Password must be at least 6 characters'}), 400
-        
-        if '@' not in email:
-            return jsonify({'error': 'Invalid email address'}), 400
+        password_valid, password_error = validate_password(password)
+        if not password_valid:
+            return jsonify({'error': password_error}), 400
         
         # Create user
         user_id = db.create_user(username, email, password)
@@ -469,6 +503,7 @@ def register():
         return jsonify({'error': 'Registration failed'}), 500
 
 @app.route('/api/login', methods=['POST'])
+@limiter.limit("10 per hour")
 def login():
     """Login user"""
     try:
