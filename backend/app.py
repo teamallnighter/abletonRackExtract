@@ -31,7 +31,13 @@ from abletonRackAnalyzer import decompress_and_parse_ableton_file, parse_chains_
 # Import MongoDB helper
 from db import db
 
-app = Flask(__name__, static_folder='..', static_url_path='')
+# Get the project root directory
+project_root = Path(__file__).parent.parent
+
+app = Flask(__name__, 
+           template_folder=str(project_root / 'templates'),
+           static_folder=str(project_root / 'static'),
+           static_url_path='/static')
 
 # Configure CORS with more restrictive settings
 CORS(app, resources={
