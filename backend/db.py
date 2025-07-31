@@ -50,6 +50,13 @@ class MongoDB:
             self.collection.create_index('description')
             self.collection.create_index('tags')
             self.collection.create_index('user_id')
+            self.collection.create_index('download_count')
+            self.collection.create_index('rack_type')
+            
+            # Create favorites collection
+            self.favorites_collection = self.db.favorites
+            self.favorites_collection.create_index([('user_id', 1), ('rack_id', 1)], unique=True)
+            self.favorites_collection.create_index('created_at')
             
             # Create indexes for users
             self.users_collection.create_index('username', unique=True)
@@ -85,7 +92,8 @@ class MongoDB:
                     'total_chains': len(rack_info.get('chains', [])),
                     'total_devices': self._count_all_devices(rack_info.get('chains', [])),
                     'macro_controls': len(rack_info.get('macro_controls', []))
-                }
+                },
+                'download_count': 0
             }
             
             # Add user_id if provided
@@ -368,6 +376,133 @@ class MongoDB:
             return result.modified_count > 0
         except Exception as e:
             logger.error(f"Failed to update rack ownership: {e}")
+            return False
+    
+    def increment_download_count(self, rack_id):
+        """Increment download count for a rack"""
+        if not self.connected:
+            if not self.connect():
+                return False
+        
+        try:
+            result = self.collection.update_one(
+                {'_id': ObjectId(rack_id)},
+                {'$inc': {'download_count': 1}}
+            )
+            return result.modified_count > 0
+        except Exception as e:
+            logger.error(f"Failed to increment download count: {e}")
+            return False
+    
+    def get_most_downloaded_racks(self, limit=10):
+        """Get most downloaded racks"""
+        if not self.connected:
+            if not self.connect():
+                return []
+        
+        try:
+            cursor = self.collection.find().sort('download_count', -1).limit(limit)
+            racks = []
+            for doc in cursor:
+                doc['_id'] = str(doc['_id'])
+                racks.append(doc)
+            return racks
+        except Exception as e:
+            logger.error(f"Failed to get most downloaded racks: {e}")
+            return []
+    
+    def toggle_favorite(self, user_id, rack_id):
+        """Toggle favorite status for a rack"""
+        if not self.connected:
+            if not self.connect():
+                return None
+        
+        try:
+            # Check if favorite exists
+            existing = self.favorites_collection.find_one({
+                'user_id': user_id,
+                'rack_id': rack_id
+            })
+            
+            if existing:
+                # Remove favorite
+                self.favorites_collection.delete_one({
+                    'user_id': user_id,
+                    'rack_id': rack_id
+                })
+                return False  # Not favorited anymore
+            else:
+                # Add favorite
+                self.favorites_collection.insert_one({
+                    'user_id': user_id,
+                    'rack_id': rack_id,
+                    'created_at': datetime.utcnow()
+                })
+                return True  # Now favorited
+                
+        except Exception as e:
+            logger.error(f"Failed to toggle favorite: {e}")
+            return None
+    
+    def is_favorited(self, user_id, rack_id):
+        """Check if a rack is favorited by a user"""
+        if not self.connected:
+            if not self.connect():
+                return False
+        
+        try:
+            existing = self.favorites_collection.find_one({
+                'user_id': user_id,
+                'rack_id': rack_id
+            })
+            return existing is not None
+        except Exception as e:
+            logger.error(f"Failed to check favorite status: {e}")
+            return False
+    
+    def get_user_favorites(self, user_id, limit=50):
+        """Get user's favorite racks"""
+        if not self.connected:
+            if not self.connect():
+                return []
+        
+        try:
+            # Get favorite rack IDs
+            favorites = self.favorites_collection.find(
+                {'user_id': user_id}
+            ).sort('created_at', -1).limit(limit)
+            
+            rack_ids = [ObjectId(fav['rack_id']) for fav in favorites]
+            
+            # Get the actual racks
+            if rack_ids:
+                cursor = self.collection.find({'_id': {'$in': rack_ids}})
+                racks = []
+                for doc in cursor:
+                    doc['_id'] = str(doc['_id'])
+                    doc['is_favorited'] = True
+                    racks.append(doc)
+                return racks
+            return []
+            
+        except Exception as e:
+            logger.error(f"Failed to get user favorites: {e}")
+            return []
+    
+    def save_rack_type(self, rack_id, rack_type):
+        """Update rack type for a rack"""
+        if not self.connected:
+            if not self.connect():
+                return False
+        
+        try:
+            result = self.collection.update_one(
+                {'_id': ObjectId(rack_id)},
+                {'$set': {'rack_type': rack_type}}
+            )
+            return result.modified_count > 0
+        except Exception as e:
+            logger.error(f"Failed to save rack type: {e}")
             return False
 
 # Create a global instance

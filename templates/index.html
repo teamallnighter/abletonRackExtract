@@ -1,22 +1,25 @@
 {% extends "base.html" %}
 
-{% block title %}Ableton Rack Analyzer{% endblock %}
+{% block title %}Ableton Rack Analyzer - Home{% endblock %}
 
 {% block content %}
-<div class="upload-section">
-    <div id="drop-zone" class="drop-zone">
-        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-        </svg>
-        <p>Drop .adg files here or click to browse</p>
-        <input type="file" id="file-input" accept=".adg" hidden>
-    </div>
+<h2>Recent Racks</h2>
+<ul id="recentRacks">
+    <!-- Recent racks will be dynamically populated here -->
+</ul>
 
-    <div id="user-info-form" class="user-info-form hidden">
-        <h3>Add Rack Information</h3>
+<h2>Popular Racks</h2>
+<ul id="popularRacks">
+    <!-- Popular racks will be dynamically populated here -->
+</ul>
+
+<h2>Your Favorite Racks</h2>
+<ul id="favoriteRacks">
+    <!-- Favorite racks will be dynamically populated here -->
+</ul>
         <div class="form-group">
-            <label for="rack-description">What does this rack do?</label>
-            <textarea id="rack-description" rows="4" placeholder="Describe the purpose and functionality of this rack..."></textarea>
+            <label for="rack-description">What does this recipe do?</label>
+            <textarea id="rack-description" rows="4" placeholder="Describe the purpose and functionality of this recipe..."></textarea>
         </div>
         <div class="form-group">
             <label for="rack-tags">Tags</label>
@@ -41,7 +44,7 @@
         </div>
         <div class="form-actions">
             <button id="skip-info" class="btn btn-secondary">Skip</button>
-            <button id="submit-info" class="btn btn-primary">Analyze Rack</button>
+            <button id="submit-info" class="btn btn-primary">Analyze Recipe</button>
         </div>
     </div>
 </div>

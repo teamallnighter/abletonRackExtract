@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Rack - Ableton Rack Analyzer</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">Ableton Rack Analyzer</a>
+            <div class="nav-links">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/search" class="nav-link">Search</a>
+                <a href="/upload" class="nav-link active">Upload</a>
+                <div id="authButtons" class="auth-buttons">
+                    <a href="/login" class="nav-link">Login</a>
+                    <a href="/register" class="nav-link">Register</a>
+                </div>
+                <div id="userMenu" class="user-menu" style="display: none;">
+                    <span id="usernameDisplay"></span>
+                    <a href="/profile" class="nav-link">Profile</a>
+                    <button onclick="logout()" class="nav-link logout-btn">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Upload New Rack</h1>
+        
+        <div class="upload-section">
+            <div class="drop-zone" id="dropZone">
+                <p>Drag and drop your .adg or .adv file here, or click to browse</p>
+                <input type="file" id="fileInput" accept=".adg,.adv" style="display: none;">
+            </div>
+            
+            <div id="fileInfo" class="file-info" style="display: none;">
+                <p>Selected file: <span id="fileName"></span></p>
+            </div>
+
+            <div class="upload-form">
+                <div class="form-group">
+                    <label for="description">Description (optional):</label>
+                    <textarea id="description" rows="3" placeholder="Describe your rack..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="tagInput">Tags:</label>
+                    <div class="tag-input-container">
+                        <input type="text" id="tagInput" placeholder="Add tags (press Enter)">
+                        <div id="tagSuggestions" class="tag-suggestions"></div>
+                    </div>
+                    <div id="selectedTags" class="selected-tags"></div>
+                </div>
+
+                <button id="uploadBtn" class="btn btn-primary" disabled>Upload and Analyze</button>
+            </div>
+        </div>
+
+        <div id="progressSection" class="progress-section" style="display: none;">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p id="progressText">Uploading...</p>
+        </div>
+
+        <div id="results" class="results-section" style="display: none;">
+            <!-- Results will be populated here -->
+        </div>
+    </div>
+
+    <script src="/static/auth.js"></script>
+    <script src="/static/upload.js"></script>
+</body>
+</html>

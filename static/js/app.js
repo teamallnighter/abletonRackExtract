@@ -67,8 +67,19 @@ document.addEventListener('DOMContentLoaded', function() {
     function submitAnalysis() {
         if (!selectedFile) return;
         
+        // Get rack type
+        const rackTypeSelect = document.getElementById('rack-type');
+        const rackType = rackTypeSelect.value;
+        
+        // Validate rack type is selected
+        if (!rackType) {
+            alert('Please select a recipe type');
+            return;
+        }
+        
         const formData = new FormData();
         formData.append('file', selectedFile);
+        formData.append('rack_type', rackType);
         
         // Add user info if provided
         const description = rackDescriptionInput.value.trim();

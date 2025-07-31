@@ -122,6 +122,36 @@ def serve_search():
     """Serve the search page"""
     return render_template('search.html')
 
+@app.route('/api/racks/<rack_id>/favorite', methods=['POST'])
+@token_required
+def toggle_favorite(current_user, rack_id):
+    """Toggle favorite status"""
+    result = db.toggle_favorite(current_user['_id'], rack_id)
+    if result is not None:
+        return jsonify({'success': True, 'favorited': result}), 200
+    return jsonify({'error': 'Failed to toggle favorite'}), 500
+
+@app.route('/api/user/favorites', methods=['GET'])
+@token_required
+def get_user_favorites(current_user):
+    """Get user favorites"""
+    favorites = db.get_user_favorites(current_user['_id'])
+    return jsonify({'success': True, 'favorites': favorites})
+
+@app.route('/api/racks/popular', methods=['GET'])
+def get_popular_racks():
+    """Get most downloaded racks"""
+    try:
+        limit = request.args.get('limit', 10, type=int)
+        racks = db.get_most_downloaded_racks(limit)
+        return jsonify({
+            'success': True,
+            'racks': racks,
+            'count': len(racks)
+        }), 200
+    except Exception as e:
+        return jsonify({'error': f'Failed to get popular racks: {str(e)}'}), 500
+
 @app.route('/rack/<rack_id>')
 def serve_rack_page(rack_id):
     """Serve the individual rack page"""
@@ -141,6 +171,11 @@ def serve_register():
 def serve_profile():
     """Serve the user profile page"""
     return render_template('profile.html')
+
+@app.route('/upload')
+def serve_upload():
+    """Serve the upload page"""
+    return render_template('upload.html')
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
@@ -414,6 +449,9 @@ def search_by_tags():
 def download_rack_file(rack_id):
     """Download the original .adg file for a rack"""
     try:
+        # Increment download count
+        db.increment_download_count(rack_id)
+        
         # Get rack from database
         rack = db.get_rack_analysis(rack_id)
         if not rack:
