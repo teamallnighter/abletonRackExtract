@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Ableton Rack Analyzer{% endblock %}
+{% block subtitle %}Login to your account{% endblock %}
+{% block main_class %}auth-container{% endblock %}
+
+{% block content %}
+<div class="auth-form">
+    <h2>Login</h2>
+    
+    <div id="error-message" class="error-message hidden"></div>
+    <div id="success-message" class="success-message hidden"></div>
+    
+    <form id="login-form">
+        <div class="form-group">
+            <label for="username">Username or Email</label>
+            <input type="text" id="username" name="username" required autocomplete="username">
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required autocomplete="current-password">
+        </div>
+        
+        <button type="submit" class="btn btn-primary btn-full-width">Login</button>
+    </form>
+    
+    <div class="auth-link">
+        Don't have an account? <a href="{{ url_for('serve_register') }}">Register here</a>
+    </div>
+    
+    <div class="auth-link">
+        <a href="{{ url_for('serve_index') }}">Back to home</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/login.js') }}"></script>
+{% endblock %}

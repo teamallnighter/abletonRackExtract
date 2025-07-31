@@ -1,54 +1,133 @@
-# Ableton Rack Analyzer Web App
+# The Ableton Cookbook 📚
 
-A clean, vanilla web application for analyzing Ableton Live rack (.adg) files.
+A community-driven platform for sharing and discovering Ableton Live rack recipes. Upload, analyze, and explore audio effect racks (.adg) and instrument racks (.adv) to learn from the production techniques of fellow musicians.
 
 ## Features
 
-- Drag & drop .adg files for instant analysis
-- Wide layout using 95% of screen width for better visibility
-- Visualize rack structure with chains and devices
-- View macro controls with current values
-- See nested racks within the signal flow
-- Export analysis results as JSON
-- Shows correct device names (not preset names)
+### 🎛️ Rack Analysis
+- Drag & drop .adg/.adv files for instant analysis
+- Visualize complete rack structure with chains and devices
+- View macro control mappings and values
+- Explore nested racks within the signal flow
+- Export analysis results as JSON or XML
 
-## Structure
+### 👥 Community Features
+- User authentication and profiles
+- Share your rack recipes with descriptions and tags
+- Search and discover racks by name, device, or tag
+- Browse recent and popular rack recipes
+- Download original rack files from other producers
+
+### 🔒 Security & Performance
+- Rate limiting to prevent abuse
+- Input sanitization and validation
+- Secure password hashing with bcrypt
+- JWT authentication
+- Security headers (CSP, HSTS, etc.)
+
+## Tech Stack
+
+- **Frontend**: Vanilla JavaScript with Jinja2 templating
+- **Backend**: Flask (Python)
+- **Database**: MongoDB
+- **Authentication**: JWT tokens
+- **Deployment**: Railway
+
+## Project Structure
 
 ```
-web-app/
-├── index.html          # Main HTML file
-├── styles.css          # All styling
-├── app.js             # Frontend JavaScript
-├── backend/           # Flask backend server
-│   ├── app.py        # Flask API
-│   └── abletonRackAnalyzer.py  # Rack analysis engine
-└── testracks/         # Sample rack files for testing
+abletonRackExtract/
+├── backend/
+│   ├── app.py                 # Flask API server
+│   ├── db.py                  # MongoDB integration
+│   ├── security.py            # Security utilities
+│   └── requirements.txt       # Python dependencies
+├── templates/                 # Jinja2 templates
+│   ├── base.html             # Base template with navigation
+│   ├── index.html            # Home page
+│   ├── search.html           # Browse recipes
+│   ├── rack.html             # Individual rack view
+│   ├── profile.html          # User profile
+│   ├── login.html            # Login page
+│   └── register.html         # Registration page
+├── static/
+│   ├── css/
+│   │   └── styles.css        # Main styles
+│   └── js/
+│       ├── app.js            # Main app logic
+│       ├── auth.js           # Authentication
+│       ├── navigation.js     # Navigation menu
+│       ├── profile.js        # Profile page
+│       ├── rack.js           # Rack viewer
+│       ├── sanitize.js       # Input sanitization
+│       ├── search.js         # Search functionality
+│       └── tokenManager.js   # Token management
+├── abletonRackAnalyzer.py    # Core analysis engine
+├── API_DOCUMENTATION.md      # API reference
+└── README.md                 # This file
 ```
 
-## Running the App
+## Local Development
 
-1. Start the backend server:
+### Prerequisites
+- Python 3.8+
+- MongoDB (local or cloud instance)
+- pip
+
+### Setup
+
+1. Clone the repository:
    ```bash
-   ./start_backend.sh
+   git clone https://github.com/yourusername/abletonRackExtract.git
+   cd abletonRackExtract
    ```
-   Or manually:
+
+2. Install Python dependencies:
    ```bash
-   cd backend
-   python3 app.py
+   pip install -r requirements.txt
    ```
 
-2. Open `index.html` in your web browser
+3. Create a `.env` file in the project root:
+   ```env
+   MONGODB_URI=your_mongodb_connection_string
+   JWT_SECRET_KEY=your_secret_key
+   ALLOWED_ORIGINS=http://localhost:5001
+   ```
 
-The backend runs on http://localhost:5001
+4. Start the backend server:
+   ```bash
+   python backend/app.py
+   ```
 
-## Usage
+5. Open http://localhost:5001 in your browser
 
-1. Drop an .adg file onto the upload area or click to browse
-2. View the analyzed rack structure
-3. Export results as JSON if needed
+## Deployment
 
-## No Dependencies!
+The app is configured for deployment on Railway:
 
-This is a vanilla HTML/CSS/JavaScript frontend - no React, no build process, no npm packages needed for the frontend. Just pure, simple web technologies.
+1. Connect your GitHub repository to Railway
+2. Add environment variables in Railway dashboard
+3. Deploy!
 
-The backend uses Flask with minimal dependencies.
+The app will automatically use the `PORT` environment variable provided by Railway.
+
+## API Documentation
+
+See [API_DOCUMENTATION.md](API_DOCUMENTATION.md) for detailed API endpoints and usage.
+
+## Contributing
+
+We welcome contributions! Please:
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+## License
+
+MIT License - feel free to use this in your own projects!
+
+## Acknowledgments
+
+Built with ❤️ for the Ableton Live community. Special thanks to all the producers sharing their knowledge and techniques through their rack designs.

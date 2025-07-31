@@ -10,7 +10,7 @@ import tempfile
 import shutil
 import logging
 from pathlib import Path
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, render_template
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import jwt
@@ -109,32 +109,32 @@ def token_required(f):
 @app.route('/')
 def serve_index():
     """Serve the main index.html"""
-    return app.send_static_file('index.html')
+    return render_template('index.html')
 
 @app.route('/search')
 def serve_search():
     """Serve the search page"""
-    return app.send_static_file('search.html')
+    return render_template('search.html')
 
 @app.route('/rack/<rack_id>')
 def serve_rack_page(rack_id):
     """Serve the individual rack page"""
-    return app.send_static_file('rack.html')
+    return render_template('rack.html', rack_id=rack_id)
 
 @app.route('/login')
 def serve_login():
     """Serve the login page"""
-    return app.send_static_file('login.html')
+    return render_template('login.html')
 
 @app.route('/register')
 def serve_register():
     """Serve the register page"""
-    return app.send_static_file('register.html')
+    return render_template('register.html')
 
 @app.route('/profile')
 def serve_profile():
     """Serve the user profile page"""
-    return app.send_static_file('profile.html')
+    return render_template('profile.html')
 
 @app.route('/api/health', methods=['GET'])
 def health_check():

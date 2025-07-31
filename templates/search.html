@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Search Racks - Ableton Rack Analyzer{% endblock %}
+{% block subtitle %}Search and explore analyzed racks{% endblock %}
+{% block main_class %}search-container{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('serve_index') }}" class="back-link">← Back to Analyzer</a>
+
+<div class="search-header">
+    <h2>Search Racks</h2>
+</div>
+
+<div class="search-controls">
+    <div class="search-input-group">
+        <input 
+            type="text" 
+            id="search-input" 
+            class="search-input" 
+            placeholder="Search by rack name, filename, or description..."
+            autofocus
+        >
+        <button id="search-button" class="search-button">Search</button>
+    </div>
+    
+    <div class="filter-tags">
+        <label class="filter-tags-label">Filter by tags:</label>
+        <div id="filter-tags-container" class="filter-tags-container">
+            <!-- Popular tags will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<div class="search-results">
+    <div class="results-header">
+        <h3>Results</h3>
+        <span id="results-count" class="results-count"></span>
+    </div>
+    
+    <div id="loading-spinner" class="loading-spinner hidden">
+        <div class="spinner"></div>
+        <p>Searching...</p>
+    </div>
+    
+    <div id="rack-grid" class="rack-grid">
+        <!-- Search results will be displayed here -->
+    </div>
+    
+    <div id="no-results" class="no-results hidden">
+        <p>No racks found. Try a different search term or adjust your filters.</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/search.js') }}"></script>
+{% endblock %}
