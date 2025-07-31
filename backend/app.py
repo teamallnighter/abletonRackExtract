@@ -150,7 +150,6 @@ def analyze_rack():
             
             # Get user info from form data
             description = request.form.get('description', '').strip()
-            producer_name = request.form.get('producer_name', '').strip()
             tags_json = request.form.get('tags', '[]')
             
             # Parse tags
@@ -159,17 +158,8 @@ def analyze_rack():
             except:
                 tags = []
             
-            # Add user info to rack_info if provided
-            if description or producer_name or tags:
-                rack_info['user_info'] = {}
-                if description:
-                    rack_info['user_info']['description'] = description
-                if producer_name:
-                    rack_info['user_info']['producer_name'] = producer_name
-                if tags:
-                    rack_info['user_info']['tags'] = tags
-            
-            # Check if user is authenticated (optional)
+            # Get username from authenticated user
+            username = None
             user_id = None
             auth_header = request.headers.get('Authorization')
             if auth_header:
@@ -177,8 +167,22 @@ def analyze_rack():
                     token = auth_header.split(' ')[1]
                     data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
                     user_id = data['user_id']
+                    # Get user details from database
+                    user = db.get_user_by_id(user_id)
+                    if user:
+                        username = user.get('username')
                 except:
                     pass  # User not authenticated, that's okay
+            
+            # Add user info to rack_info if provided
+            if description or username or tags:
+                rack_info['user_info'] = {}
+                if description:
+                    rack_info['user_info']['description'] = description
+                if username:
+                    rack_info['user_info']['producer_name'] = username
+                if tags:
+                    rack_info['user_info']['tags'] = tags
             
             # Save to MongoDB
             try:

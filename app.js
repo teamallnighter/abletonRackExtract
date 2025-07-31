@@ -8,7 +8,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const rackStatsElement = document.getElementById('rack-stats');
     const userInfoForm = document.getElementById('user-info-form');
     const rackDescriptionInput = document.getElementById('rack-description');
-    const producerNameInput = document.getElementById('producer-name');
     const tagInput = document.getElementById('tag-input');
     const selectedTagsDiv = document.getElementById('selected-tags');
     const tagSuggestionsDiv = document.getElementById('tag-suggestions');
@@ -73,13 +72,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Add user info if provided
         const description = rackDescriptionInput.value.trim();
-        const producerName = producerNameInput.value.trim();
         
         if (description) {
             formData.append('description', description);
-        }
-        if (producerName) {
-            formData.append('producer_name', producerName);
         }
         
         // Add tags if any selected
@@ -288,7 +283,6 @@ document.addEventListener('DOMContentLoaded', function() {
         fileInput.value = '';
         selectedFile = null;
         rackDescriptionInput.value = '';
-        producerNameInput.value = '';
         selectedTags = [];
         renderTags();
         dropZone.classList.remove('hidden');
