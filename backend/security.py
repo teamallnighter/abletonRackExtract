@@ -3,7 +3,7 @@ Security utilities for enhanced password validation and email validation
 """
 
 import re
-from typing import Tuple, bool
+from typing import Tuple
 
 def validate_password(password: str) -> Tuple[bool, str]:
     """
