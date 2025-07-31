@@ -17,73 +17,9 @@
 <ul id="favoriteRacks">
     <!-- Favorite racks will be dynamically populated here -->
 </ul>
-        <div class="form-group">
-            <label for="rack-description">What does this recipe do?</label>
-            <textarea id="rack-description" rows="4" placeholder="Describe the purpose and functionality of this recipe..."></textarea>
-        </div>
-        <div class="form-group">
-            <label for="rack-tags">Tags</label>
-            <div class="tag-input-container">
-                <div id="selected-tags" class="selected-tags"></div>
-                <input type="text" id="tag-input" placeholder="Add tags (e.g., reverb, delay, mixing)..." autocomplete="off">
-            </div>
-            <div id="tag-suggestions" class="tag-suggestions hidden"></div>
-            <div class="suggested-tags">
-                <span class="suggested-label">Popular tags:</span>
-                <span class="tag-suggestion" data-tag="mixing">mixing</span>
-                <span class="tag-suggestion" data-tag="mastering">mastering</span>
-                <span class="tag-suggestion" data-tag="reverb">reverb</span>
-                <span class="tag-suggestion" data-tag="delay">delay</span>
-                <span class="tag-suggestion" data-tag="distortion">distortion</span>
-                <span class="tag-suggestion" data-tag="eq">eq</span>
-                <span class="tag-suggestion" data-tag="compression">compression</span>
-                <span class="tag-suggestion" data-tag="stereo-width">stereo width</span>
-                <span class="tag-suggestion" data-tag="resampling">resampling</span>
-                <span class="tag-suggestion" data-tag="glitch">glitch</span>
-            </div>
-        </div>
-        <div class="form-actions">
-            <button id="skip-info" class="btn btn-secondary">Skip</button>
-            <button id="submit-info" class="btn btn-primary">Analyze Recipe</button>
-        </div>
-    </div>
-</div>
-
-<div id="results-section" class="results-section hidden">
-    <div class="rack-info">
-        <h2 id="rack-name"></h2>
-        <div id="rack-stats" class="rack-stats"></div>
-        <div id="user-info-display" class="user-info-display hidden">
-            <div id="producer-info" class="producer-info"></div>
-            <div id="description-info" class="description-info"></div>
-            <div id="tags-display" class="tags-display"></div>
-        </div>
-    </div>
-
-    <div id="macro-controls" class="macro-controls hidden">
-        <h3>Macro Controls</h3>
-        <div id="macro-list" class="macro-list"></div>
-    </div>
-
-    <div id="visualization" class="visualization">
-        <h3>Signal Flow</h3>
-        <div id="chains-container" class="chains-container"></div>
-    </div>
-
-    <div class="actions">
-        <button id="view-rack" class="btn btn-primary hidden">View Rack Page</button>
-        <button id="export-json" class="btn btn-secondary">Export JSON</button>
-        <button id="analyze-another" class="btn btn-primary">Analyze Another</button>
-    </div>
-</div>
-
-<div id="loading" class="loading hidden">
-    <div class="spinner"></div>
-    <p>Analyzing rack...</p>
-</div>
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
-<script src="{{ url_for('static', filename='js/index.js') }}"></script>
+<script src="{{ url_for('static', filename='js/home.js') }}"></script>
 {% endblock %}
