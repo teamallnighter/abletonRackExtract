@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Ableton Rack Analyzer</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        .profile-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 2rem;
+            background: var(--surface);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+        
+        .greeting {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: var(--primary);
+        }
+        
+        .rack-list {
+            margin-top: 2rem;
+        }
+        
+        .rack-item {
+            background: var(--background);
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .rack-item h3 {
+            margin: 0 0 0.5rem 0;
+            color: var(--text);
+        }
+
+        .rack-info {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+        }
+
+        .btn-logout {
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Ableton Rack Analyzer</h1>
+        <p class="subtitle">Your Profile</p>
+    </header>
+
+    <main class="profile-container">
+        <div id="greeting" class="greeting"></div>
+
+        <h2>Your Racks</h2>
+        <div class="rack-list" id="rack-list">
+            <p id="no-racks-message" style="text-align: center; color: var(--text-dim);">Loading racks...</p>
+        </div>
+
+        <div class="profile-actions" style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
+            <a href="/" class="btn btn-secondary">Upload New Rack</a>
+            <button onclick="logout()" class="btn btn-primary">Logout</button>
+        </div>
+    </main>
+
+    <script>
+        // Fetching user info from localStorage
+        const user = JSON.parse(localStorage.getItem('user'));
+        const token = localStorage.getItem('token');
+
+        // Redirect to login if not authenticated
+        if (!user || !token) {
+            window.location.href = '/login';
+        }
+
+        // Display user greeting
+        const greetingDiv = document.getElementById('greeting');
+        greetingDiv.textContent = `Welcome, ${user.username}!`;
+
+        // Fetch user racks
+        async function fetchUserRacks() {
+            try {
+                const response = await fetch('/api/user/racks', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    greetingDiv.textContent = 'Failed to fetch racks.';
+                    return;
+                }
+
+                const data = await response.json();
+                const rackList = document.getElementById('rack-list');
+                const noRacksMessage = document.getElementById('no-racks-message');
+                
+                // Clear loading message
+                rackList.innerHTML = '';
+                
+                if (data.racks && data.racks.length > 0) {
+                    data.racks.forEach(rack => {
+                        const rackItem = document.createElement('div');
+                        rackItem.classList.add('rack-item');
+                        rackItem.style.cursor = 'pointer';
+                        
+                        rackItem.innerHTML = `
+                            <h3>${rack.name.replace(/_/g, ' ')}</h3>
+                            <div class="rack-info">
+                                <span>Uploaded: ${new Date(rack.created_at).toLocaleString()}</span><br>
+                                <span>Chains: ${rack.chain_count || 0} | Devices: ${rack.device_count || 0}</span>
+                            </div>
+                        `;
+                        
+                        // Make rack clickable
+                        rackItem.onclick = () => {
+                            window.location.href = `/rack/${rack._id}`;
+                        };
+                        
+                        rackList.appendChild(rackItem);
+                    });
+                } else {
+                    rackList.innerHTML = '<p style="text-align: center; color: var(--text-dim);">You haven\'t uploaded any racks yet.</p>';
+                }
+                
+            } catch (error) {
+                greetingDiv.textContent = 'Error loading racks.';
+            }
+        }
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+        }
+
+        // Fetch racks on page load
+        fetchUserRacks();
+    </script>
+</body>
+</html>

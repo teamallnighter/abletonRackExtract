@@ -169,13 +169,24 @@ def analyze_rack():
                 if tags:
                     rack_info['user_info']['tags'] = tags
             
+            # Check if user is authenticated (optional)
+            user_id = None
+            auth_header = request.headers.get('Authorization')
+            if auth_header:
+                try:
+                    token = auth_header.split(' ')[1]
+                    data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+                    user_id = data['user_id']
+                except:
+                    pass  # User not authenticated, that's okay
+            
             # Save to MongoDB
             try:
                 # Read the original file content for storage
                 with open(filepath, 'rb') as f:
                     file_content = f.read()
                 
-                rack_id = db.save_rack_analysis(rack_info, filename, file_content)
+                rack_id = db.save_rack_analysis(rack_info, filename, file_content, user_id=user_id)
                 if rack_id:
                     logger.info(f"Saved rack analysis to MongoDB with ID: {rack_id}")
                 else:

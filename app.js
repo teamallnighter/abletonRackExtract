@@ -92,8 +92,16 @@ document.addEventListener('DOMContentLoaded', function() {
         loadingIndicator.classList.remove('hidden');
         resultsSection.classList.add('hidden');
 
+        // Add JWT token if user is logged in
+        const token = localStorage.getItem('token');
+        const headers = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
         fetch('/api/analyze', {
             method: 'POST',
+            headers: headers,
             body: formData
         })
         .then(response => response.json())
