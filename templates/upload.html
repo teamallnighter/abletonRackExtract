@@ -1,61 +1,59 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Rack - Ableton Rack Analyzer</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <a href="/" class="nav-brand">Ableton Rack Analyzer</a>
-            <div class="nav-links">
-                <a href="/" class="nav-link">Home</a>
-                <a href="/search" class="nav-link">Search</a>
-                <a href="/upload" class="nav-link active">Upload</a>
-                <div id="authButtons" class="auth-buttons">
-                    <a href="/login" class="nav-link">Login</a>
-                    <a href="/register" class="nav-link">Register</a>
-                </div>
-                <div id="userMenu" class="user-menu" style="display: none;">
-                    <span id="usernameDisplay"></span>
-                    <a href="/profile" class="nav-link">Profile</a>
-                    <button onclick="logout()" class="nav-link logout-btn">Logout</button>
-                </div>
-            </div>
-        </div>
-    </nav>
+{% extends "base.html" %}
 
-    <div class="container">
-        <h1>Upload New Rack</h1>
+{% block title %}Upload Recipe - The Ableton Cookbook{% endblock %}
+
+{% block content %}
+        <h1>Upload New Recipe</h1>
         
         <div class="upload-section">
-            <div class="drop-zone" id="dropZone">
-                <p>Drag and drop your .adg or .adv file here, or click to browse</p>
-                <input type="file" id="fileInput" accept=".adg,.adv" style="display: none;">
+            <div id="drop-zone" class="drop-zone">
+                <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <p>Drop .adg or .adv files here or click to browse</p>
+                <input type="file" id="file-input" accept=".adg,.adv" hidden>
             </div>
             
-            <div id="fileInfo" class="file-info" style="display: none;">
-                <p>Selected file: <span id="fileName"></span></p>
-            </div>
-
-            <div class="upload-form">
+            <div id="user-info-form" class="user-info-form">
+                <h3>Add Recipe Information</h3>
                 <div class="form-group">
-                    <label for="description">Description (optional):</label>
-                    <textarea id="description" rows="3" placeholder="Describe your rack..."></textarea>
+                    <label for="rack-type">Recipe Type <span class="required">*</span></label>
+                    <select id="rack-type" required>
+                        <option value="">Select a type...</option>
+                        <option value="Audio Effect Rack">Audio Effect Rack</option>
+                        <option value="Instrument Rack">Instrument Rack</option>
+                        <option value="MIDI Effect Rack">MIDI Effect Rack</option>
+                    </select>
                 </div>
-
                 <div class="form-group">
-                    <label for="tagInput">Tags:</label>
+                    <label for="rack-description">What does this recipe do?</label>
+                    <textarea id="rack-description" rows="4" placeholder="Describe the purpose and functionality of this recipe..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="rack-tags">Tags</label>
                     <div class="tag-input-container">
-                        <input type="text" id="tagInput" placeholder="Add tags (press Enter)">
-                        <div id="tagSuggestions" class="tag-suggestions"></div>
+                        <div id="selected-tags" class="selected-tags"></div>
+                        <input type="text" id="tag-input" placeholder="Add tags (e.g., reverb, delay, mixing)..." autocomplete="off">
                     </div>
-                    <div id="selectedTags" class="selected-tags"></div>
+                    <div id="tag-suggestions" class="tag-suggestions hidden"></div>
+                    <div class="suggested-tags">
+                        <span class="suggested-label">Popular tags:</span>
+                        <span class="tag-suggestion" data-tag="mixing">mixing</span>
+                        <span class="tag-suggestion" data-tag="mastering">mastering</span>
+                        <span class="tag-suggestion" data-tag="reverb">reverb</span>
+                        <span class="tag-suggestion" data-tag="delay">delay</span>
+                        <span class="tag-suggestion" data-tag="distortion">distortion</span>
+                        <span class="tag-suggestion" data-tag="eq">eq</span>
+                        <span class="tag-suggestion" data-tag="compression">compression</span>
+                        <span class="tag-suggestion" data-tag="stereo-width">stereo width</span>
+                        <span class="tag-suggestion" data-tag="resampling">resampling</span>
+                        <span class="tag-suggestion" data-tag="glitch">glitch</span>
+                    </div>
                 </div>
-
-                <button id="uploadBtn" class="btn btn-primary" disabled>Upload and Analyze</button>
+                <div class="form-actions">
+                    <button id="skip-info" class="btn btn-secondary">Skip</button>
+                    <button id="submit-info" class="btn btn-primary">Analyze Recipe</button>
+                </div>
             </div>
         </div>
 
@@ -69,9 +67,9 @@
         <div id="results" class="results-section" style="display: none;">
             <!-- Results will be populated here -->
         </div>
-    </div>
+{% endblock %}
 
-    <script src="/static/auth.js"></script>
-    <script src="/static/upload.js"></script>
-</body>
-</html>
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/index.js') }}"></script>
+{% endblock %}
