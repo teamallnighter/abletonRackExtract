@@ -13,6 +13,9 @@ from pathlib import Path
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
+import jwt
+from functools import wraps
+import secrets
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -31,10 +34,43 @@ CORS(app)  # Enable CORS for all routes
 # Configuration
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['UPLOAD_FOLDER'] = tempfile.mkdtemp()
+app.config['SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', secrets.token_hex(32))
 ALLOWED_EXTENSIONS = {'adg', 'adv'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Authentication decorator
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        
+        # Get token from header
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            try:
+                token = auth_header.split(' ')[1]  # Bearer <token>
+            except IndexError:
+                pass
+        
+        if not token:
+            return jsonify({'error': 'Token is missing'}), 401
+        
+        try:
+            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            current_user_id = data['user_id']
+            current_user = db.get_user_by_id(current_user_id)
+            if not current_user:
+                return jsonify({'error': 'Invalid token'}), 401
+        except jwt.ExpiredSignatureError:
+            return jsonify({'error': 'Token has expired'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'error': 'Invalid token'}), 401
+        
+        return f(current_user, *args, **kwargs)
+    
+    return decorated
 
 @app.route('/')
 def serve_index():
@@ -50,6 +86,21 @@ def serve_search():
 def serve_rack_page(rack_id):
     """Serve the individual rack page"""
     return app.send_static_file('rack.html')
+
+@app.route('/login')
+def serve_login():
+    """Serve the login page"""
+    return app.send_static_file('login.html')
+
+@app.route('/register')
+def serve_register():
+    """Serve the register page"""
+    return app.send_static_file('register.html')
+
+@app.route('/profile')
+def serve_profile():
+    """Serve the user profile page"""
+    return app.send_static_file('profile.html')
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
@@ -350,6 +401,128 @@ def cleanup():
         
     except Exception as e:
         return jsonify({'error': f'Cleanup failed: {str(e)}'}), 500
+
+# Authentication Routes
+@app.route('/api/register', methods=['POST'])
+def register():
+    """Register a new user"""
+    try:
+        data = request.get_json()
+        
+        # Validate input
+        username = data.get('username', '').strip()
+        email = data.get('email', '').strip()
+        password = data.get('password', '')
+        
+        if not username or not email or not password:
+            return jsonify({'error': 'Username, email and password are required'}), 400
+        
+        if len(username) < 3:
+            return jsonify({'error': 'Username must be at least 3 characters'}), 400
+        
+        if len(password) < 6:
+            return jsonify({'error': 'Password must be at least 6 characters'}), 400
+        
+        if '@' not in email:
+            return jsonify({'error': 'Invalid email address'}), 400
+        
+        # Create user
+        user_id = db.create_user(username, email, password)
+        
+        if not user_id:
+            return jsonify({'error': 'Username or email already exists'}), 409
+        
+        # Create JWT token
+        from datetime import datetime, timedelta
+        token = jwt.encode({
+            'user_id': user_id,
+            'exp': datetime.utcnow() + timedelta(days=7)
+        }, app.config['SECRET_KEY'], algorithm='HS256')
+        
+        return jsonify({
+            'success': True,
+            'token': token,
+            'user': {
+                'id': user_id,
+                'username': username,
+                'email': email
+            }
+        }), 201
+        
+    except Exception as e:
+        logger.error(f"Registration failed: {e}")
+        return jsonify({'error': 'Registration failed'}), 500
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    """Login user"""
+    try:
+        data = request.get_json()
+        
+        username = data.get('username', '').strip()
+        password = data.get('password', '')
+        
+        if not username or not password:
+            return jsonify({'error': 'Username and password are required'}), 400
+        
+        # Authenticate user
+        user = db.authenticate_user(username, password)
+        
+        if not user:
+            return jsonify({'error': 'Invalid username or password'}), 401
+        
+        # Create JWT token
+        from datetime import datetime, timedelta
+        token = jwt.encode({
+            'user_id': user['_id'],
+            'exp': datetime.utcnow() + timedelta(days=7)
+        }, app.config['SECRET_KEY'], algorithm='HS256')
+        
+        return jsonify({
+            'success': True,
+            'token': token,
+            'user': user
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Login failed: {e}")
+        return jsonify({'error': 'Login failed'}), 500
+
+@app.route('/api/user/profile', methods=['GET'])
+@token_required
+def get_profile(current_user):
+    """Get current user profile"""
+    try:
+        # Get user's racks
+        user_racks = db.get_user_racks(current_user['_id'], limit=20)
+        
+        return jsonify({
+            'success': True,
+            'user': current_user,
+            'racks': user_racks
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Failed to get profile: {e}")
+        return jsonify({'error': 'Failed to get profile'}), 500
+
+@app.route('/api/user/racks', methods=['GET'])
+@token_required
+def get_user_racks(current_user):
+    """Get all racks uploaded by current user"""
+    try:
+        limit = request.args.get('limit', 50, type=int)
+        racks = db.get_user_racks(current_user['_id'], limit=limit)
+        
+        return jsonify({
+            'success': True,
+            'racks': racks,
+            'count': len(racks)
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Failed to get user racks: {e}")
+        return jsonify({'error': 'Failed to get user racks'}), 500
 
 if __name__ == '__main__':
     # Create upload folder if it doesn't exist

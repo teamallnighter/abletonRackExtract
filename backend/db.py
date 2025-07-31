@@ -7,6 +7,9 @@ from datetime import datetime
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 import logging
+import bcrypt
+from bson import ObjectId
+import base64
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -37,14 +40,20 @@ class MongoDB:
             # Use database
             self.db = self.client.ableton_rack_analyzer
             self.collection = self.db.racks
+            self.users_collection = self.db.users
             
-            # Create indexes
+            # Create indexes for racks
             self.collection.create_index('filename')
             self.collection.create_index('created_at')
             self.collection.create_index('rack_name')
             self.collection.create_index('producer_name')
             self.collection.create_index('description')
             self.collection.create_index('tags')
+            self.collection.create_index('user_id')
+            
+            # Create indexes for users
+            self.users_collection.create_index('username', unique=True)
+            self.users_collection.create_index('email', unique=True)
             
             self.connected = True
             logger.info("Successfully connected to MongoDB")
@@ -59,7 +68,7 @@ class MongoDB:
             self.connected = False
             return False
     
-    def save_rack_analysis(self, rack_info, filename, file_content=None):
+    def save_rack_analysis(self, rack_info, filename, file_content=None, user_id=None):
         """Save rack analysis to MongoDB"""
         if not self.connected:
             if not self.connect():
@@ -78,6 +87,10 @@ class MongoDB:
                     'macro_controls': len(rack_info.get('macro_controls', []))
                 }
             }
+            
+            # Add user_id if provided
+            if user_id:
+                document['user_id'] = user_id
             
             # Add user info if present
             if 'user_info' in rack_info:
@@ -229,6 +242,133 @@ class MongoDB:
             self.client.close()
             self.connected = False
             logger.info("MongoDB connection closed")
+    
+    # User Authentication Methods
+    def create_user(self, username, email, password):
+        """Create a new user account"""
+        if not self.connected:
+            if not self.connect():
+                return None
+        
+        try:
+            # Hash password
+            password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+            
+            # Create user document
+            user_doc = {
+                'username': username.lower(),
+                'email': email.lower(),
+                'password_hash': password_hash,
+                'created_at': datetime.utcnow(),
+                'last_login': None,
+                'is_active': True,
+                'rack_count': 0
+            }
+            
+            # Insert user
+            result = self.users_collection.insert_one(user_doc)
+            logger.info(f"Created new user: {username}")
+            
+            return str(result.inserted_id)
+            
+        except Exception as e:
+            logger.error(f"Failed to create user: {e}")
+            return None
+    
+    def authenticate_user(self, username, password):
+        """Authenticate user and return user info if successful"""
+        if not self.connected:
+            if not self.connect():
+                return None
+        
+        try:
+            # Find user by username or email
+            user = self.users_collection.find_one({
+                '$or': [
+                    {'username': username.lower()},
+                    {'email': username.lower()}
+                ]
+            })
+            
+            if not user:
+                return None
+            
+            # Check password
+            if bcrypt.checkpw(password.encode('utf-8'), user['password_hash']):
+                # Update last login
+                self.users_collection.update_one(
+                    {'_id': user['_id']},
+                    {'$set': {'last_login': datetime.utcnow()}}
+                )
+                
+                # Return user info (without password)
+                user['_id'] = str(user['_id'])
+                del user['password_hash']
+                return user
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Failed to authenticate user: {e}")
+            return None
+    
+    def get_user_by_id(self, user_id):
+        """Get user by ID"""
+        if not self.connected:
+            if not self.connect():
+                return None
+        
+        try:
+            user = self.users_collection.find_one({'_id': ObjectId(user_id)})
+            if user:
+                user['_id'] = str(user['_id'])
+                del user['password_hash']
+                return user
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get user: {e}")
+            return None
+    
+    def get_user_racks(self, user_id, limit=50):
+        """Get racks uploaded by a specific user"""
+        if not self.connected:
+            if not self.connect():
+                return []
+        
+        try:
+            cursor = self.collection.find({'user_id': user_id}).sort('created_at', -1).limit(limit)
+            racks = []
+            for doc in cursor:
+                doc['_id'] = str(doc['_id'])
+                racks.append(doc)
+            return racks
+        except Exception as e:
+            logger.error(f"Failed to get user racks: {e}")
+            return []
+    
+    def update_rack_ownership(self, rack_id, user_id):
+        """Update rack to be owned by a user"""
+        if not self.connected:
+            if not self.connect():
+                return False
+        
+        try:
+            result = self.collection.update_one(
+                {'_id': ObjectId(rack_id)},
+                {'$set': {'user_id': user_id}}
+            )
+            
+            # Update user's rack count
+            if result.modified_count > 0:
+                self.users_collection.update_one(
+                    {'_id': ObjectId(user_id)},
+                    {'$inc': {'rack_count': 1}}
+                )
+            
+            return result.modified_count > 0
+        except Exception as e:
+            logger.error(f"Failed to update rack ownership: {e}")
+            return False
 
 # Create a global instance
 db = MongoDB()
