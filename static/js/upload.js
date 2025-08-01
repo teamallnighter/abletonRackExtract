@@ -10,8 +10,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function setupDropZone() {
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
     
     // Click to browse
     dropZone.addEventListener('click', () => fileInput.click());
@@ -55,15 +55,17 @@ function handleFileSelect(file) {
     }
     
     selectedFile = file;
-    document.getElementById('fileName').textContent = file.name;
-    document.getElementById('fileInfo').style.display = 'block';
-    document.getElementById('uploadBtn').disabled = false;
+    // Update the drop zone to show file name
+    const dropZone = document.getElementById('drop-zone');
+    dropZone.querySelector('p').textContent = `Selected: ${file.name}`;
+    // Show the user info form
+    document.getElementById('user-info-form').style.display = 'block';
 }
 
 function setupTagInput() {
-    const tagInput = document.getElementById('tagInput');
-    const tagSuggestions = document.getElementById('tagSuggestions');
-    const selectedTagsDiv = document.getElementById('selectedTags');
+    const tagInput = document.getElementById('tag-input');
+    const tagSuggestions = document.getElementById('tag-suggestions');
+    const selectedTagsDiv = document.getElementById('selected-tags');
     
     // Load popular tags
     loadPopularTags();
@@ -102,8 +104,12 @@ function removeTag(tag) {
     updateSelectedTagsDisplay();
 }
 
+// Make removeTag available globally for onclick handlers
+window.removeTag = removeTag;
+window.selectSuggestion = selectSuggestion;
+
 function updateSelectedTagsDisplay() {
-    const selectedTagsDiv = document.getElementById('selectedTags');
+    const selectedTagsDiv = document.getElementById('selected-tags');
     selectedTagsDiv.innerHTML = selectedTags.map(tag => `
         <span class="tag">
             ${tag}
@@ -127,7 +133,7 @@ async function loadPopularTags() {
 }
 
 function showTagSuggestions(query) {
-    const tagSuggestions = document.getElementById('tagSuggestions');
+    const tagSuggestions = document.getElementById('tag-suggestions');
     const suggestions = (window.popularTags || [])
         .filter(tag => tag.toLowerCase().includes(query) && !selectedTags.includes(tag))
         .slice(0, 5);
@@ -144,15 +150,28 @@ function showTagSuggestions(query) {
 
 function selectSuggestion(tag) {
     addTag(tag);
-    document.getElementById('tagInput').value = '';
-    document.getElementById('tagSuggestions').style.display = 'none';
+    document.getElementById('tag-input').value = '';
+    document.getElementById('tag-suggestions').style.display = 'none';
 }
 
 function setupUploadButton() {
-    document.getElementById('uploadBtn').addEventListener('click', uploadFile);
+    // Setup submit and skip buttons
+    const submitBtn = document.getElementById('submit-info');
+    const skipBtn = document.getElementById('skip-info');
+    
+    if (submitBtn) {
+        submitBtn.addEventListener('click', uploadFile);
+    }
+    
+    if (skipBtn) {
+        skipBtn.addEventListener('click', () => {
+            // Upload without additional info
+            uploadFile(true);
+        });
+    }
 }
 
-async function uploadFile() {
+async function uploadFile(skipInfo = false) {
     if (!selectedFile) {
         alert('Please select a file first');
         return;
@@ -160,12 +179,25 @@ async function uploadFile() {
     
     const formData = new FormData();
     formData.append('file', selectedFile);
-    formData.append('description', document.getElementById('description').value);
-    formData.append('tags', JSON.stringify(selectedTags));
+    
+    if (!skipInfo) {
+        const rackType = document.getElementById('rack-type').value;
+        const description = document.getElementById('rack-description').value;
+        
+        if (!rackType) {
+            alert('Please select a rack type');
+            return;
+        }
+        
+        formData.append('rack_type', rackType);
+        formData.append('description', description);
+        formData.append('tags', JSON.stringify(selectedTags));
+    }
     
     // Show progress
     document.getElementById('progressSection').style.display = 'block';
-    document.getElementById('uploadBtn').disabled = true;
+    // Hide the form
+    document.getElementById('user-info-form').style.display = 'none';
     
     try {
         const token = localStorage.getItem('token');
@@ -195,6 +227,6 @@ async function uploadFile() {
         console.error('Upload error:', error);
         alert('Upload failed: ' + error.message);
         document.getElementById('progressSection').style.display = 'none';
-        document.getElementById('uploadBtn').disabled = false;
+        document.getElementById('user-info-form').style.display = 'block';
     }
 }
