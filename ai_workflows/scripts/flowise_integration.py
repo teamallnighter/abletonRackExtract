@@ -10,6 +10,13 @@ from typing import Dict, List, Any, Optional
 from pathlib import Path
 import os
 from datetime import datetime
+from pymongo import MongoClient
+from bson import ObjectId
+import sys
+
+# Add parent directory to import backend modules
+sys.path.append(str(Path(__file__).parent.parent.parent / 'backend'))
+from db import MongoDB
 
 
 class FlowiseAIClient:
@@ -79,6 +86,7 @@ class RackDataFlowiseAdapter:
     def __init__(self, flowise_client: FlowiseAIClient):
         self.client = flowise_client
         self.data_dir = Path("ai_workflows/data")
+        self.data_dir.mkdir(parents=True, exist_ok=True)
     
     def prepare_rack_data_for_flowise(self, rack_data: Dict) -> Dict:
         """Convert rack data to FlowiseAI-compatible format"""
@@ -201,6 +209,126 @@ class RackDataFlowiseAdapter:
         )
         
         return response.get('text', '')
+
+
+class MongoDBFlowiseAdapter(RackDataFlowiseAdapter):
+    """MongoDB-backed adapter for FlowiseAI integration"""
+    
+    def __init__(self, flowise_client: FlowiseAIClient, mongodb: MongoDB = None):
+        super().__init__(flowise_client)
+        self.mongodb = mongodb or MongoDB()
+        if not self.mongodb.connected:
+            self.mongodb.connect()
+    
+    def sync_racks_to_flowise(self, limit: int = None) -> List[Dict]:
+        """Sync racks from MongoDB to FlowiseAI"""
+        print("Syncing racks from MongoDB to FlowiseAI...")
+        
+        # Get racks from MongoDB
+        racks = self.mongodb.get_recent_racks(limit or 1000)
+        results = []
+        
+        for rack in racks:
+            # Convert MongoDB rack to FlowiseAI format
+            rack_data = self._convert_mongodb_rack_to_features(rack)
+            flowise_data = self.prepare_rack_data_for_flowise(rack_data)
+            
+            # Add MongoDB ID to metadata
+            flowise_data['metadata']['mongodb_id'] = str(rack['_id'])
+            
+            # Save as temporary file for upload
+            temp_file = self.data_dir / f"rack_{rack.get('rack_name', 'unknown')}_{rack['_id']}.json"
+            with open(temp_file, 'w') as f:
+                json.dump(flowise_data, f)
+            
+            try:
+                result = self.client.upload_document(
+                    str(temp_file),
+                    metadata=flowise_data['metadata']
+                )
+                results.append(result)
+                print(f"Uploaded rack: {rack.get('rack_name', 'Unknown')} (ID: {rack['_id']})")
+            except Exception as e:
+                print(f"Error uploading rack {rack['_id']}: {e}")
+            finally:
+                # Clean up temp file
+                if temp_file.exists():
+                    temp_file.unlink()
+        
+        print(f"Synced {len(results)} racks to FlowiseAI")
+        return results
+    
+    def _convert_mongodb_rack_to_features(self, rack: Dict) -> Dict:
+        """Convert MongoDB rack document to feature format"""
+        analysis = rack.get('analysis', {})
+        
+        # Extract macro names
+        macro_names = [m.get('name', '') for m in analysis.get('macro_controls', [])]
+        macro_values = [m.get('value', 0) for m in analysis.get('macro_controls', [])]
+        
+        # Extract chain names and device info
+        chain_names = []
+        device_types = []
+        device_type_counts = {}
+        solo_chains = 0
+        
+        for chain in analysis.get('chains', []):
+            chain_names.append(chain.get('name', ''))
+            if chain.get('solo', False):
+                solo_chains += 1
+            
+            for device in chain.get('devices', []):
+                device_type = device.get('type', 'Unknown')
+                device_types.append(device_type)
+                device_type_counts[device_type] = device_type_counts.get(device_type, 0) + 1
+        
+        return {
+            'rack_name': rack.get('rack_name', 'Unknown'),
+            'num_macros': len(macro_names),
+            'num_chains': len(chain_names),
+            'total_devices': rack.get('stats', {}).get('total_devices', 0),
+            'device_types': list(set(device_types)),
+            'device_type_counts': device_type_counts,
+            'macro_names': macro_names,
+            'macro_values': macro_values,
+            'chain_names': chain_names,
+            'solo_chains': solo_chains,
+            'producer_name': rack.get('producer_name', ''),
+            'description': rack.get('description', ''),
+            'tags': rack.get('tags', []),
+            'download_count': rack.get('download_count', 0),
+            'created_at': rack.get('created_at', datetime.utcnow()).isoformat(),
+            'file_path': rack.get('filename', '')
+        }
+    
+    def search_and_analyze(self, query: str, chatflow_id: str) -> Dict:
+        """Search racks in MongoDB and analyze with FlowiseAI"""
+        # Search in MongoDB
+        racks = self.mongodb.search_racks(query)
+        
+        if not racks:
+            return {
+                'query': query,
+                'results': [],
+                'analysis': 'No racks found matching your query.'
+            }
+        
+        # Prepare context for FlowiseAI
+        context = f"Found {len(racks)} racks matching '{query}':\n\n"
+        for i, rack in enumerate(racks[:5]):  # Limit to first 5 for context
+            context += f"{i+1}. {rack.get('rack_name', 'Unknown')} - "
+            context += f"{rack.get('stats', {}).get('total_devices', 0)} devices, "
+            context += f"{rack.get('stats', {}).get('macro_controls', 0)} macros\n"
+        
+        # Get AI analysis
+        analysis_query = f"Given these search results for '{query}':\n{context}\nProvide insights and recommendations."
+        ai_response = self.query_rack_insights(chatflow_id, analysis_query)
+        
+        return {
+            'query': query,
+            'results': racks,
+            'analysis': ai_response
+        }
 
 
 def main():

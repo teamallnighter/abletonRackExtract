@@ -20,14 +20,44 @@ pip install requests numpy
 
 ### 3. Configure Environment Variables
 
+Since FlowiseAI is deployed in the same Railway project as your MongoDB, it will automatically have access to the MongoDB connection. However, you need to set the FlowiseAI URL.
+
 Create a `.env` file in the project root:
 
 ```bash
+# FlowiseAI instance URL from Railway
 FLOWISE_API_URL=https://your-flowise-instance.railway.app
 FLOWISE_API_KEY=your-api-key-if-configured
+
+# MongoDB connection (already set in Railway, but needed for local testing)
+MONGO_URL=mongodb+srv://...
 ```
 
+**Note**: In Railway, FlowiseAI will automatically have access to the `MONGO_URL` environment variable from your MongoDB service.
+
 ## Usage
+
+### Syncing MongoDB to FlowiseAI
+
+Since you already have racks stored in MongoDB, you can sync them directly to FlowiseAI:
+
+```bash
+# Run the sync script
+python ai_workflows/scripts/sync_mongodb_to_flowise.py
+```
+
+This interactive script will:
+1. Connect to your existing MongoDB database
+2. Connect to your FlowiseAI instance
+3. Create AI workflows for rack analysis
+4. Sync your racks from MongoDB to FlowiseAI
+5. Enable AI-powered search and analysis
+
+The script uses the `MongoDBFlowiseAdapter` class which:
+- Reads racks directly from your MongoDB database
+- Converts them to FlowiseAI-compatible format
+- Preserves all metadata (producer name, tags, download count, etc.)
+- Links back to the original MongoDB documents
 
 ### Preparing Rack Data
 
