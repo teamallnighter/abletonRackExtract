@@ -7,7 +7,14 @@ This script connects your existing MongoDB database to FlowiseAI
 import os
 import sys
 from pathlib import Path
-from dotenv import load_dotenv
+
+# Try to load dotenv if available
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # Railway provides environment variables directly
+    pass
 
 # Add parent directory to import modules
 sys.path.append(str(Path(__file__).parent.parent.parent / 'backend'))
@@ -15,9 +22,6 @@ sys.path.append(str(Path(__file__).parent))
 
 from flowise_integration import FlowiseAIClient, MongoDBFlowiseAdapter
 from db import MongoDB
-
-# Load environment variables
-load_dotenv()
 
 
 def main():
