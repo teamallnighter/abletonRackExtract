@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const favoriteRacksList = document.getElementById('favoriteRacks');
 
     // Fetch and render racks
-declare async function fetchRacks(endpoint, listElement) {
+    async function fetchRacks(endpoint, listElement) {
         try {
             const response = await fetch(endpoint);
             const data = await response.json();
