@@ -31,6 +31,9 @@ from abletonRackAnalyzer import decompress_and_parse_ableton_file, parse_chains_
 # Import MongoDB helper
 from db import db
 
+# Import AI routes
+from ai_routes import ai_bp
+
 # Get the project root directory
 project_root = Path(__file__).parent.parent
 
@@ -49,6 +52,9 @@ CORS(app, resources={
 })
 
 limiter = Limiter(get_remote_address, app=app, default_limits=["200 per day", "50 per hour"])
+
+# Register AI routes blueprint
+app.register_blueprint(ai_bp, url_prefix='/api')
 
 # Configuration
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
