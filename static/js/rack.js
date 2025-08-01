@@ -17,10 +17,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load rack details
     async function loadRackDetails() {
         const rackId = getRackId();
+        console.log('Loading rack with ID:', rackId); // Debug log
 
         try {
             const response = await fetch(`/api/racks/${rackId}`);
+            console.log('API response status:', response.status); // Debug log
             const data = await response.json();
+            console.log('API response data:', data); // Debug log
 
             if (!data.success || !data.rack) {
                 showError();

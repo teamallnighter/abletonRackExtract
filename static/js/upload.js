@@ -135,7 +135,8 @@ async function loadPopularTags() {
 function showTagSuggestions(query) {
     const tagSuggestions = document.getElementById('tag-suggestions');
     const suggestions = (window.popularTags || [])
-        .filter(tag => tag.toLowerCase().includes(query) && !selectedTags.includes(tag))
+        .map(tag => typeof tag === 'string' ? tag : tag.name)
+        .filter(tag => tag && tag.toLowerCase().includes(query) && !selectedTags.includes(tag))
         .slice(0, 5);
     
     if (suggestions.length > 0) {
@@ -213,10 +214,12 @@ async function uploadFile(skipInfo = false) {
         });
         
         const data = await response.json();
+        console.log('Upload response:', data); // Debug log
         
         if (data.success) {
             // Show success and redirect to rack page
             document.getElementById('progressText').textContent = 'Upload successful! Redirecting...';
+            console.log('Redirecting to:', `/rack/${data.rack_id}`); // Debug log
             setTimeout(() => {
                 window.location.href = `/rack/${data.rack_id}`;
             }, 1500);
