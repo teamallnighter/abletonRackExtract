@@ -1,37 +1,33 @@
-// Inline JavaScript extracted from index.html
+// JavaScript for dynamically loading racks on the home page
 document.addEventListener('DOMContentLoaded', function() {
-    const itemList = document.getElementById('item-list');
-    const loadingMessage = document.getElementById('loading-message');
+    const recentRacksList = document.getElementById('recentRacks');
+    const popularRacksList = document.getElementById('popularRacks');
+    const favoriteRacksList = document.getElementById('favoriteRacks');
 
-    // Simulate fetching data from an API
-    async function fetchData() {
-        loadingMessage.style.display = 'block';
+    // Fetch and render racks
+declare async function fetchRacks(endpoint, listElement) {
         try {
-            const response = await fetch('/api/items');
+            const response = await fetch(endpoint);
             const data = await response.json();
-
             if (response.ok) {
-                renderItems(data);
+                renderRacks(data.racks, listElement);
             } else {
-                showError('Failed to fetch items.');
+                showError('Failed to fetch racks.');
             }
         } catch (error) {
-            showError('An error occurred while fetching items.');
+            showError('An error occurred while fetching racks.');
         }
-        loadingMessage.style.display = 'none';
     }
 
-    // Render items in the list
-    function renderItems(items) {
-        itemList.innerHTML = '';
-        items.forEach(item => {
+    function renderRacks(racks, listElement) {
+        listElement.innerHTML = '';
+        racks.forEach(rack => {
             const li = document.createElement('li');
-            li.textContent = item.name;
-            itemList.appendChild(li);
+            li.textContent = rack.name;
+            listElement.appendChild(li);
         });
     }
 
-    // Display an error message
     function showError(message) {
         const errorMessage = document.createElement('div');
         errorMessage.textContent = message;
@@ -40,6 +36,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Initialize the page
-    fetchData();
+    fetchRacks('/api/racks/recent', recentRacksList);
+    fetchRacks('/api/racks/popular', popularRacksList);
+    fetchRacks('/api/user/favorites', favoriteRacksList);
 });
 
