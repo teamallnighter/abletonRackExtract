@@ -6,7 +6,7 @@ Using Pinecone for vector database
 import os
 import logging
 from typing import List, Dict, Optional
-import pinecone
+from pinecone import Pinecone, ServerlessSpec
 from openai import OpenAI
 import numpy as np
 
@@ -36,23 +36,21 @@ class VectorStorage:
             
         try:
             # Initialize Pinecone
-            pinecone.init(
-                api_key=self.pinecone_api_key,
-                environment=self.pinecone_environment
-            )
+            pc = Pinecone(api_key=self.pinecone_api_key)
             
             # Check if index exists
-            existing_indexes = pinecone.list_indexes()
+            existing_indexes = pc.list_indexes().names()
             if self.index_name not in existing_indexes:
                 logger.info(f"Creating Pinecone index: {self.index_name}")
                 try:
-                    pinecone.create_index(
-                        self.index_name,
+                    pc.create_index(
+                        name=self.index_name,
                         dimension=1536,  # OpenAI embedding dimension
                         metric='cosine',
-                        pods=1,
-                        replicas=1,
-                        pod_type='p1.x1'
+                        spec=ServerlessSpec(
+                            cloud='aws',
+                            region='us-east-1'
+                        )
                     )
                 except Exception as create_error:
                     logger.error(f"Failed to create index: {create_error}")
@@ -64,7 +62,7 @@ class VectorStorage:
                         raise
             
             # Connect to index
-            self.index = pinecone.Index(self.index_name)
+            self.index = pc.Index(self.index_name)
             self.initialized = True
             logger.info("Successfully connected to Pinecone")
             return True
