@@ -61,22 +61,29 @@ def get_ai_analyzer():
 @ai_bp.route('/ai/status', methods=['GET'])
 def ai_status():
     """Check AI service status"""
-    analyzer, error = get_ai_analyzer()
-    
-    if error:
+    try:
+        analyzer, error = get_ai_analyzer()
+        
+        if error:
+            return jsonify({
+                'status': 'error',
+                'message': 'AI services not configured',
+                'error': error,
+                'setup_instructions': 'Set OPENAI_API_KEY environment variable in Railway'
+            })
+        
+        return jsonify({
+            'status': 'operational',
+            'ai_provider': 'OpenAI',
+            'mongodb_connected': analyzer.mongodb.connected,
+            'message': 'AI services are ready'
+        })
+    except Exception as e:
         return jsonify({
             'status': 'error',
-            'message': 'AI services not configured',
-            'error': error,
-            'setup_instructions': 'Set OPENAI_API_KEY environment variable in Railway'
+            'message': 'Failed to check AI status',
+            'error': str(e)
         }), 500
-    
-    return jsonify({
-        'status': 'operational',
-        'ai_provider': 'OpenAI',
-        'mongodb_connected': analyzer.mongodb.connected,
-        'message': 'AI services are ready'
-    })
 
 @ai_bp.route('/ai/analyze/<rack_id>', methods=['GET'])
 @jwt_required()
