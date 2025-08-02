@@ -1572,7 +1572,7 @@ main,
 }
 
 a {
-    color: #ffffff;
+    color: #5103f7;
     text-decoration: none;
 }
 
@@ -1588,4 +1588,12 @@ a:hover {
     padding: 1rem;
     margin-bottom: 1rem;
     background: #dedede;
+}
+
+.listOfRacks {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    align-items: flex-start;
+    justify-content: space-evenly;
 }
