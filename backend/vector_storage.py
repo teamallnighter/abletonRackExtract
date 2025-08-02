@@ -41,17 +41,27 @@ class VectorStorage:
                 environment=self.pinecone_environment
             )
             
-            # Create index if it doesn't exist
-            if self.index_name not in pinecone.list_indexes():
+            # Check if index exists
+            existing_indexes = pinecone.list_indexes()
+            if self.index_name not in existing_indexes:
                 logger.info(f"Creating Pinecone index: {self.index_name}")
-                pinecone.create_index(
-                    self.index_name,
-                    dimension=1536,  # OpenAI embedding dimension
-                    metric='cosine',
-                    pods=1,
-                    replicas=1,
-                    pod_type='p1.x1'
-                )
+                try:
+                    pinecone.create_index(
+                        self.index_name,
+                        dimension=1536,  # OpenAI embedding dimension
+                        metric='cosine',
+                        pods=1,
+                        replicas=1,
+                        pod_type='p1.x1'
+                    )
+                except Exception as create_error:
+                    logger.error(f"Failed to create index: {create_error}")
+                    # If we can't create, try to use the first available index
+                    if existing_indexes:
+                        self.index_name = existing_indexes[0]
+                        logger.info(f"Using existing index: {self.index_name}")
+                    else:
+                        raise
             
             # Connect to index
             self.index = pinecone.Index(self.index_name)
