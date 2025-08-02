@@ -37,9 +37,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             if (response.ok && data.success) {
-                // Store token in localStorage
+                // Store token and user info in localStorage
                 localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify(data.user));
+                localStorage.setItem('username', data.user.username);
+                localStorage.setItem('email', data.user.email);
+                localStorage.setItem('userId', data.user.id || data.user._id);
                 
                 // Show success message
                 successDiv.textContent = 'Account created successfully! Redirecting...';
