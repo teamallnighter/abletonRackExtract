@@ -1,27 +1,18 @@
 """
-AI workflow routes for Flask backend
-Provides API endpoints to interact with FlowiseAI
+AI routes for Flask backend
+Provides API endpoints for OpenAI-based rack analysis
 """
 
 from flask import Blueprint, jsonify, request
 import jwt
 from functools import wraps
 import os
-import sys
-from pathlib import Path
-from datetime import datetime
-
-# Add AI workflows directory to path
-sys.path.append(str(Path(__file__).parent.parent / 'ai_workflows' / 'scripts'))
-
-from flowise_integration import FlowiseAIClient, MongoDBFlowiseAdapter
-from db import MongoDB
+from openai_integration import RackAIAnalyzer
 
 ai_bp = Blueprint('ai', __name__)
 
-# Initialize clients (reuse across requests)
-_flowise_client = None
-_mongodb_adapter = None
+# Initialize AI analyzer (reuse across requests)
+_ai_analyzer = None
 
 # JWT required decorator (matching the one in app.py)
 def jwt_required():
@@ -56,244 +47,147 @@ def jwt_required():
         return decorated_function
     return decorator
 
-def get_flowise_adapter():
-    """Get or create FlowiseAI adapter"""
-    global _flowise_client, _mongodb_adapter
-    if _flowise_client is None:
-        _flowise_client = FlowiseAIClient()
-    if _mongodb_adapter is None:
-        mongodb = MongoDB()
-        mongodb.connect()
-        _mongodb_adapter = MongoDBFlowiseAdapter(_flowise_client, mongodb)
-    return _mongodb_adapter
+def get_ai_analyzer():
+    """Get or create AI analyzer instance"""
+    global _ai_analyzer
+    if _ai_analyzer is None:
+        try:
+            _ai_analyzer = RackAIAnalyzer()
+        except ValueError as e:
+            # OpenAI API key not set
+            return None, str(e)
+    return _ai_analyzer, None
 
 @ai_bp.route('/ai/status', methods=['GET'])
 def ai_status():
     """Check AI service status"""
-    try:
-        adapter = get_flowise_adapter()
-        flowise_url = adapter.client.base_url
-        mongodb_connected = adapter.mongodb.connected
-        
-        return jsonify({
-            'status': 'operational',
-            'flowise_url': flowise_url,
-            'mongodb_connected': mongodb_connected,
-            'message': 'AI services are ready'
-        })
-    except Exception as e:
+    analyzer, error = get_ai_analyzer()
+    
+    if error:
         return jsonify({
             'status': 'error',
-            'error': str(e)
+            'message': 'AI services not configured',
+            'error': error,
+            'setup_instructions': 'Set OPENAI_API_KEY environment variable in Railway'
         }), 500
+    
+    return jsonify({
+        'status': 'operational',
+        'ai_provider': 'OpenAI',
+        'mongodb_connected': analyzer.mongodb.connected,
+        'message': 'AI services are ready'
+    })
 
-@ai_bp.route('/ai/sync-racks', methods=['POST'])
+@ai_bp.route('/ai/analyze/<rack_id>', methods=['GET'])
 @jwt_required()
-def sync_racks():
-    """Sync racks from MongoDB to FlowiseAI"""
-    try:
-        data = request.get_json()
-        limit = data.get('limit', 100)  # Default to 100 racks
-        
-        adapter = get_flowise_adapter()
-        
-        # Debug: Check MongoDB connection and racks
-        racks = adapter.mongodb.get_recent_racks(limit)
-        print(f"[DEBUG] Found {len(racks)} racks in MongoDB")
-        
-        # Debug: Check FlowiseAI client
-        print(f"[DEBUG] FlowiseAI URL: {adapter.client.base_url}")
-        print(f"[DEBUG] FlowiseAI API Key set: {bool(adapter.client.api_key)}")
-        
-        results = adapter.sync_racks_to_flowise(limit)
-        
-        return jsonify({
-            'success': True,
-            'synced_count': len(results),
-            'message': f'Successfully synced {len(results)} racks to FlowiseAI',
-            'debug': {
-                'mongodb_racks': len(racks),
-                'flowise_url': adapter.client.base_url,
-                'flowise_api_key_set': bool(adapter.client.api_key)
-            }
-        })
-    except Exception as e:
-        import traceback
-        print(f"[ERROR] Sync failed: {str(e)}")
-        print(traceback.format_exc())
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+def analyze_rack(rack_id):
+    """Analyze a single rack"""
+    analyzer, error = get_ai_analyzer()
+    if error:
+        return jsonify({'error': error}), 500
+    
+    result = analyzer.analyze_rack(rack_id)
+    
+    if 'error' in result:
+        return jsonify(result), 404 if 'not found' in result['error'] else 500
+    
+    return jsonify(result)
 
-@ai_bp.route('/ai/create-chatflow', methods=['POST'])
+@ai_bp.route('/ai/compare', methods=['POST'])
 @jwt_required()
-def create_chatflow():
-    """Create a new rack analysis chatflow"""
-    try:
-        adapter = get_flowise_adapter()
-        chatflow = adapter.create_rack_analysis_chatflow()
-        
-        # Store chatflow ID in environment or database for future use
-        os.environ['FLOWISE_CHATFLOW_ID'] = chatflow['id']
-        
-        return jsonify({
-            'success': True,
-            'chatflow_id': chatflow['id'],
-            'message': 'Rack analysis chatflow created successfully'
-        })
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+def compare_racks():
+    """Compare two racks"""
+    analyzer, error = get_ai_analyzer()
+    if error:
+        return jsonify({'error': error}), 500
+    
+    data = request.get_json()
+    rack_id1 = data.get('rack_id1')
+    rack_id2 = data.get('rack_id2')
+    
+    if not rack_id1 or not rack_id2:
+        return jsonify({'error': 'Both rack_id1 and rack_id2 are required'}), 400
+    
+    result = analyzer.compare_racks(rack_id1, rack_id2)
+    
+    if 'error' in result:
+        return jsonify(result), 404 if 'not found' in result['error'] else 500
+    
+    return jsonify(result)
 
-@ai_bp.route('/ai/debug-racks', methods=['GET'])
-def debug_racks():
-    """Debug endpoint to check racks in MongoDB"""
-    try:
-        adapter = get_flowise_adapter()
-        racks = adapter.mongodb.get_recent_racks(10)
-        
-        return jsonify({
-            'success': True,
-            'rack_count': len(racks),
-            'racks': [{
-                'id': r.get('_id'),
-                'name': r.get('rack_name'),
-                'created_at': str(r.get('created_at'))
-            } for r in racks],
-            'flowise_api_key_set': bool(adapter.client.api_key),
-            'flowise_url': adapter.client.base_url
-        })
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-@ai_bp.route('/ai/analyze', methods=['POST'])
+@ai_bp.route('/ai/suggest/<rack_id>', methods=['GET'])
 @jwt_required()
-def analyze_racks():
-    """Analyze racks with AI"""
-    try:
-        data = request.get_json()
-        query = data.get('query', '')
-        chatflow_id = data.get('chatflow_id') or os.getenv('FLOWISE_CHATFLOW_ID')
-        
-        if not query:
-            return jsonify({
-                'success': False,
-                'error': 'Query parameter is required'
-            }), 400
-        
-        if not chatflow_id:
-            return jsonify({
-                'success': False,
-                'error': 'Chatflow ID not found. Please create a chatflow first.'
-            }), 400
-        
-        adapter = get_flowise_adapter()
-        result = adapter.search_and_analyze(query, chatflow_id)
-        
-        # Convert ObjectId to string for JSON serialization
-        for rack in result.get('results', []):
-            if '_id' in rack:
-                rack['_id'] = str(rack['_id'])
-        
-        return jsonify({
-            'success': True,
-            'query': result['query'],
-            'rack_count': len(result['results']),
-            'analysis': result['analysis'],
-            'results': result['results'][:10]  # Limit to first 10 results
-        })
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+def suggest_improvements(rack_id):
+    """Suggest improvements for a rack"""
+    analyzer, error = get_ai_analyzer()
+    if error:
+        return jsonify({'error': error}), 500
+    
+    result = analyzer.suggest_improvements(rack_id)
+    
+    if 'error' in result:
+        return jsonify(result), 404 if 'not found' in result['error'] else 500
+    
+    return jsonify(result)
 
-@ai_bp.route('/ai/rack/<rack_id>/insights', methods=['GET'])
+@ai_bp.route('/ai/ask', methods=['POST'])
 @jwt_required()
-def get_rack_insights(rack_id):
-    """Get AI insights for a specific rack"""
-    try:
-        chatflow_id = request.args.get('chatflow_id') or os.getenv('FLOWISE_CHATFLOW_ID')
-        
-        if not chatflow_id:
-            return jsonify({
-                'success': False,
-                'error': 'Chatflow ID not found. Please create a chatflow first.'
-            }), 400
-        
-        adapter = get_flowise_adapter()
-        
-        # Get rack from MongoDB
-        rack = adapter.mongodb.get_rack_analysis(rack_id)
-        if not rack:
-            return jsonify({
-                'success': False,
-                'error': 'Rack not found'
-            }), 404
-        
-        # Prepare query for specific rack
-        query = f"""Analyze this Ableton rack and provide insights:
-        Name: {rack.get('rack_name', 'Unknown')}
-        Devices: {rack.get('stats', {}).get('total_devices', 0)}
-        Chains: {rack.get('stats', {}).get('total_chains', 0)}
-        Macros: {rack.get('stats', {}).get('macro_controls', 0)}
-        
-        Provide suggestions for improvement and identify any interesting patterns."""
-        
-        insights = adapter.query_rack_insights(chatflow_id, query)
-        
-        return jsonify({
-            'success': True,
-            'rack_id': rack_id,
-            'rack_name': rack.get('rack_name', 'Unknown'),
-            'insights': insights
-        })
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+def ask_question():
+    """Ask a question about racks"""
+    analyzer, error = get_ai_analyzer()
+    if error:
+        return jsonify({'error': error}), 500
+    
+    data = request.get_json()
+    question = data.get('question')
+    rack_ids = data.get('rack_ids', None)
+    
+    if not question:
+        return jsonify({'error': 'Question is required'}), 400
+    
+    result = analyzer.answer_question(question, rack_ids)
+    
+    if 'error' in result:
+        return jsonify(result), 500
+    
+    return jsonify(result)
 
-@ai_bp.route('/ai/batch-process', methods=['POST'])
+@ai_bp.route('/ai/generate-ideas/<rack_id>', methods=['GET'])
 @jwt_required()
-def batch_process_racks():
-    """Process multiple rack files for AI training"""
-    try:
-        data = request.get_json()
-        directory_path = data.get('directory', '/tmp/racks')
-        
-        # Import the prepare script
-        from prepare_rack_data import RackDataProcessor
-        
-        processor = RackDataProcessor()
-        dataset_path = processor.process_directory(directory_path)
-        
-        # Optionally create training splits
-        if data.get('create_splits', False):
-            train_path, val_path = processor.create_training_splits(
-                str(dataset_path),
-                data.get('train_ratio', 0.8)
-            )
-            
-            return jsonify({
-                'success': True,
-                'dataset_path': str(dataset_path),
-                'train_path': str(train_path),
-                'val_path': str(val_path)
-            })
-        
-        return jsonify({
-            'success': True,
-            'dataset_path': str(dataset_path)
-        })
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+def generate_ideas(rack_id):
+    """Generate ideas for similar racks"""
+    analyzer, error = get_ai_analyzer()
+    if error:
+        return jsonify({'error': error}), 500
+    
+    result = analyzer.generate_similar_rack_idea(rack_id)
+    
+    if 'error' in result:
+        return jsonify(result), 404 if 'not found' in result['error'] else 500
+    
+    return jsonify(result)
+
+@ai_bp.route('/ai/chat', methods=['POST'])
+@jwt_required()
+def chat():
+    """Simple chat interface for rack-related questions"""
+    analyzer, error = get_ai_analyzer()
+    if error:
+        return jsonify({'error': error}), 500
+    
+    data = request.get_json()
+    message = data.get('message')
+    
+    if not message:
+        return jsonify({'error': 'Message is required'}), 400
+    
+    # Use the answer_question method for general chat
+    result = analyzer.answer_question(message)
+    
+    if 'error' in result:
+        return jsonify(result), 500
+    
+    return jsonify({
+        'message': result.get('answer', 'I could not process your request.'),
+        'racks_analyzed': result.get('racks_analyzed', 0)
+    })
