@@ -131,6 +131,30 @@ def create_chatflow():
             'error': str(e)
         }), 500
 
+@ai_bp.route('/ai/debug-racks', methods=['GET'])
+def debug_racks():
+    """Debug endpoint to check racks in MongoDB"""
+    try:
+        adapter = get_flowise_adapter()
+        racks = adapter.mongodb.get_recent_racks(10)
+        
+        return jsonify({
+            'success': True,
+            'rack_count': len(racks),
+            'racks': [{
+                'id': r.get('_id'),
+                'name': r.get('rack_name'),
+                'created_at': str(r.get('created_at'))
+            } for r in racks],
+            'flowise_api_key_set': bool(adapter.client.api_key),
+            'flowise_url': adapter.client.base_url
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @ai_bp.route('/ai/analyze', methods=['POST'])
 @jwt_required()
 def analyze_racks():
