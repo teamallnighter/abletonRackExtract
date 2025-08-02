@@ -1579,3 +1579,13 @@ a {
 a:hover {
     text-decoration: underline;
 }
+
+.rack-item {
+    display: flex;
+    flex-direction: row;
+    border-radius: 10px;
+    border: 1px solid #3a3a3a;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background: #dedede;
+}
