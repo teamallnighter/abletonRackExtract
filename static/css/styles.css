@@ -1,17 +1,17 @@
 /* Global styles */
 :root {
-    --primary: #ff35a7;
-    --secondary: #491ef7;
-    --background: #1a1a1a;
-    --surface: #242424;
-    --surface-light: #2a2a2a;
+    --primary: #fbb902ff;
+    --secondary: #a8a8a8ff;
+    --background: #0d0d0dff;
+    --surface: #cececeff;
+    --surface-light: #cdf8ffff;
     --text: #ffffff;
     --text-dim: #b0b0b0;
     --border: #3a3a3a;
     --success: #4caf50;
     --error: #f44336;
     --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    --header-gradient: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    --header-gradient: linear-gradient(135deg, #fbb902ff, #a8a8a8ff);
     --clickable-cursor: pointer;
     --hidden-visibility: none;
     --search-margin-top: 1rem;

@@ -114,7 +114,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="device">
                             <div class="device-header">
                                 <span class="device-name">${device.name}</span>
-                                <span class="device-state ${device.on ? 'on' : ''}">${device.on ? 'ON' : 'OFF'}</span>
                             </div>
                             ${device.parameters && Object.keys(device.parameters).length > 0 ? `
                                 <div class="device-params">
