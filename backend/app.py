@@ -33,6 +33,9 @@ from db import db
 
 # Import AI routes
 from ai_routes import ai_bp
+from semantic_routes import semantic_bp
+from openai_integration import RackAIAnalyzer
+from vector_storage import vector_storage
 
 # Get the project root directory
 project_root = Path(__file__).parent.parent
@@ -55,6 +58,7 @@ limiter = Limiter(get_remote_address, app=app, default_limits=["200 per day", "5
 
 # Register AI routes blueprint
 app.register_blueprint(ai_bp, url_prefix='/api')
+app.register_blueprint(semantic_bp, url_prefix='/api')
 
 # Configuration
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
@@ -333,7 +337,38 @@ def complete_analysis(current_user):
             logger.error(f"Error saving to MongoDB: {str(e)}")
             return jsonify({'error': f'Failed to save analysis: {str(e)}'}), 500
         
-        return jsonify({'success': True, 'rack_id': rack_id}), 200
+        # Initiate AI analysis automatically
+        try:
+            analyzer = RackAIAnalyzer()
+            analysis_result = analyzer.analyze_rack(rack_id)
+            if 'error' in analysis_result:
+                logger.warning(f"AI analysis failed for rack {rack_id}: {analysis_result['error']}")
+                # Don't fail the whole operation if AI analysis fails
+                analysis_result = None
+            else:
+                logger.info(f"AI analysis complete for rack {rack_id}")
+                # Save AI analysis to the rack document
+                db.update_rack_ai_analysis(rack_id, analysis_result)
+        except Exception as ai_error:
+            logger.error(f"AI analysis error for rack {rack_id}: {str(ai_error)}")
+            analysis_result = None
+        
+        # Store vector embedding for semantic search
+        try:
+            # Get the complete rack data including the AI analysis
+            complete_rack = db.get_rack_analysis(rack_id)
+            if complete_rack:
+                vector_storage.store_rack_embedding(rack_id, complete_rack)
+                logger.info(f"Stored vector embedding for rack {rack_id}")
+        except Exception as vector_error:
+            logger.error(f"Vector storage error for rack {rack_id}: {str(vector_error)}")
+            # Don't fail the operation if vector storage fails
+        
+        return jsonify({
+            'success': True, 
+            'rack_id': rack_id, 
+            'ai_analysis': analysis_result
+        }), 200
         
     except Exception as e:
         return jsonify({'error': f'Completion failed: {str(e)}'}), 500

@@ -491,6 +491,27 @@ class MongoDB:
             logger.error(f"Failed to get user favorites: {e}")
             return []
     
+    def update_rack_ai_analysis(self, rack_id, ai_analysis):
+        """Update rack with AI analysis results"""
+        if not self.connected:
+            if not self.connect():
+                return False
+        
+        try:
+            result = self.collection.update_one(
+                {'_id': ObjectId(rack_id)},
+                {
+                    '$set': {
+                        'ai_analysis': ai_analysis,
+                        'ai_analyzed_at': datetime.utcnow()
+                    }
+                }
+            )
+            return result.modified_count > 0
+        except Exception as e:
+            logger.error(f"Failed to update AI analysis: {e}")
+            return False
+    
     def save_rack_type(self, rack_id, rack_type):
         """Update rack type for a rack"""
         if not self.connected:
