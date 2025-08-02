@@ -189,8 +189,8 @@ def health_check():
     return jsonify({'status': 'healthy', 'message': 'Ableton Rack Analyzer API is running'})
 
 @app.route('/api/analyze', methods=['POST'])
-def analyze_rack():
-    """Analyze an uploaded Ableton rack file"""
+def analyze_rack_initial():
+    """Perform initial analysis of an uploaded Ableton rack file without saving"""
     try:
         # Check if file is present
         if 'file' not in request.files:
@@ -229,86 +229,30 @@ def analyze_rack():
             xml_path = export_xml_to_file(xml_root, filepath, temp_dir)
             json_path = export_analysis_to_json(rack_info, filepath, temp_dir)
             
-            # Get user info from form data
-            description = request.form.get('description', '').strip()
-            rack_type = request.form.get('rack_type', '').strip()
-            tags_json = request.form.get('tags', '[]')
+            # Read file content and encode as base64 for client storage
+            import base64
+            with open(filepath, 'rb') as f:
+                file_content = f.read()
+            file_content_b64 = base64.b64encode(file_content).decode('utf-8')
             
-            # Debug log to see what's being received
-            logger.info(f"Form data received - description: '{description}', rack_type: '{rack_type}', tags_json: '{tags_json}'")
-            
-            # Parse tags
-            try:
-                tags = json.loads(tags_json) if tags_json else []
-            except:
-                tags = []
-            
-            # Get username from authenticated user
-            username = None
-            user_id = None
-            auth_header = request.headers.get('Authorization')
-            if auth_header:
-                try:
-                    token = auth_header.split(' ')[1]
-                    data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-                    user_id = data['user_id']
-                    # Get user details from database
-                    user = db.get_user_by_id(user_id)
-                    if user:
-                        username = user.get('username')
-                except:
-                    pass  # User not authenticated, that's okay
-            
-            # Add user info to rack_info if provided
-            if description or username or tags or rack_type:
-                rack_info['user_info'] = {}
-                if description:
-                    rack_info['user_info']['description'] = description
-                if username:
-                    rack_info['user_info']['producer_name'] = username
-                if tags:
-                    rack_info['user_info']['tags'] = tags
-                if rack_type:
-                    rack_info['user_info']['rack_type'] = rack_type
-            
-            # Save to MongoDB
-            try:
-                # Read the original file content for storage
-                with open(filepath, 'rb') as f:
-                    file_content = f.read()
-                
-                rack_id = db.save_rack_analysis(rack_info, filename, file_content, user_id=user_id)
-                if rack_id:
-                    logger.info(f"Saved rack analysis to MongoDB with ID: {rack_id}")
-                else:
-                    logger.warning("Failed to save rack analysis to MongoDB")
-            except Exception as e:
-                logger.error(f"Error saving to MongoDB: {e}")
-                # Don't fail the request if MongoDB save fails
-            
-            # Prepare response data
+            # Prepare response without saving
             response_data = {
                 'success': True,
                 'analysis': rack_info,
                 'filename': filename,
+                'file_content': file_content_b64,  # Include for client-side storage
                 'stats': {
                     'total_chains': len(rack_info.get('chains', [])),
                     'total_devices': sum(len(chain.get('devices', [])) for chain in rack_info.get('chains', [])),
                     'macro_controls': len(rack_info.get('macro_controls', []))
+                },
+                'download_ids': {
+                    'xml': os.path.basename(xml_path) if xml_path else None,
+                    'json': os.path.basename(json_path) if json_path else None
                 }
             }
             
-            # Add MongoDB ID if available
-            if 'rack_id' in locals() and rack_id:
-                response_data['rack_id'] = rack_id
-            
-            # Store paths for download endpoints
-            response_data['download_ids'] = {
-                'xml': os.path.basename(xml_path) if xml_path else None,
-                'json': os.path.basename(json_path) if json_path else None
-            }
-            
-            # Store temp directory in app context for cleanup
+            # Store temp directory in app context
             if not hasattr(app, 'temp_dirs'):
                 app.temp_dirs = {}
             app.temp_dirs[filename] = temp_dir
@@ -322,6 +266,77 @@ def analyze_rack():
             
     except Exception as e:
         return jsonify({'error': f'Request failed: {str(e)}'}), 500
+
+@app.route('/api/analyze/complete', methods=['POST'])
+@token_required
+def complete_analysis(current_user):
+    """Complete the analysis by saving metadata after initial analysis"""
+    try:
+        data = request.get_json()
+        rack_info = data.get('analysis')
+        filename = data.get('filename', 'unknown')
+        user_info = data.get('user_info', {})
+        file_content_b64 = data.get('file_content')
+        
+        # Include user info in rack_info
+        rack_info['user_info'] = {
+            'producer_name': current_user.get('username'),
+            'description': user_info.get('description', ''),
+            'rack_type': user_info.get('rack_type', ''),
+            'tags': user_info.get('tags', [])
+        }
+        
+        # Update chains and devices with user-provided names/descriptions if provided
+        if 'chains' in user_info:
+            for i, chain_update in enumerate(user_info['chains']):
+                if i < len(rack_info.get('chains', [])):
+                    if 'name' in chain_update:
+                        rack_info['chains'][i]['name'] = chain_update['name']
+                    if 'description' in chain_update:
+                        rack_info['chains'][i]['description'] = chain_update['description']
+                    # Update devices within chains
+                    if 'devices' in chain_update:
+                        for j, device_update in enumerate(chain_update['devices']):
+                            if j < len(rack_info['chains'][i].get('devices', [])):
+                                if 'name' in device_update:
+                                    rack_info['chains'][i]['devices'][j]['name'] = device_update['name']
+                                if 'description' in device_update:
+                                    rack_info['chains'][i]['devices'][j]['description'] = device_update['description']
+        
+        # Update macro controls if provided
+        if 'macro_controls' in user_info:
+            for i, macro_update in enumerate(user_info['macro_controls']):
+                if i < len(rack_info.get('macro_controls', [])):
+                    if 'name' in macro_update:
+                        rack_info['macro_controls'][i]['name'] = macro_update['name']
+                    if 'description' in macro_update:
+                        rack_info['macro_controls'][i]['description'] = macro_update['description']
+        
+        # Save to MongoDB
+        try:
+            # Decode base64 file content
+            import base64
+            file_content = base64.b64decode(file_content_b64) if file_content_b64 else b''
+            
+            rack_id = db.save_rack_analysis(rack_info, filename, file_content, user_id=current_user['_id'])
+            if rack_id:
+                logger.info(f"Saved rack analysis to MongoDB with ID: {rack_id}")
+                
+                # Clean up temp directory if it exists
+                if hasattr(app, 'temp_dirs') and filename in app.temp_dirs:
+                    shutil.rmtree(app.temp_dirs[filename], ignore_errors=True)
+                    del app.temp_dirs[filename]
+            else:
+                logger.warning("Failed to save rack analysis to MongoDB")
+                return jsonify({'error': 'Failed to save analysis'}), 500
+        except Exception as e:
+            logger.error(f"Error saving to MongoDB: {str(e)}")
+            return jsonify({'error': f'Failed to save analysis: {str(e)}'}), 500
+        
+        return jsonify({'success': True, 'rack_id': rack_id}), 200
+        
+    except Exception as e:
+        return jsonify({'error': f'Completion failed: {str(e)}'}), 500
 
 @app.route('/api/download/<file_type>/<filename>', methods=['GET'])
 def download_file(file_type, filename):

@@ -58,8 +58,9 @@ function handleFileSelect(file) {
     // Update the drop zone to show file name
     const dropZone = document.getElementById('drop-zone');
     dropZone.querySelector('p').textContent = `Selected: ${file.name}`;
-    // Show the user info form
-    document.getElementById('user-info-form').style.display = 'block';
+    
+    // Immediately start the analysis
+    performInitialAnalysis();
 }
 
 function setupTagInput() {
@@ -171,18 +172,18 @@ function setupUploadButton() {
     const skipBtn = document.getElementById('skip-info');
     
     if (submitBtn) {
-        submitBtn.addEventListener('click', uploadFile);
+        submitBtn.addEventListener('click', completeUpload);
     }
     
     if (skipBtn) {
         skipBtn.addEventListener('click', () => {
-            // Upload without additional info
-            uploadFile(true);
+            // Skip additional info and save with minimal metadata
+            completeUpload(true);
         });
     }
 }
 
-async function uploadFile(skipInfo = false) {
+async function performInitialAnalysis() {
     if (!selectedFile) {
         alert('Please select a file first');
         return;
@@ -191,18 +192,10 @@ async function uploadFile(skipInfo = false) {
     const formData = new FormData();
     formData.append('file', selectedFile);
     
-    if (!skipInfo) {
-        const rackType = document.getElementById('rack-type').value;
-        const description = document.getElementById('rack-description').value;
-        
-        if (!rackType) {
-            alert('Please select a rack type');
-            return;
-        }
-        
-        formData.append('rack_type', rackType);
-        formData.append('description', description);
-        formData.append('tags', JSON.stringify(selectedTags));
+    const token = localStorage.getItem('token');
+    const headers = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
     }
     
     // Show progress
@@ -211,12 +204,6 @@ async function uploadFile(skipInfo = false) {
     document.getElementById('user-info-form').style.display = 'none';
     
     try {
-        const token = localStorage.getItem('token');
-        const headers = {};
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
-        
         const response = await fetch('/api/analyze', {
             method: 'POST',
             headers: headers,
@@ -224,21 +211,73 @@ async function uploadFile(skipInfo = false) {
         });
         
         const data = await response.json();
-        console.log('Upload response:', data); // Debug log
+        console.log('Initial analysis response:', data); // Debug log
         
         if (data.success) {
-            // Show success and redirect to rack page
-            document.getElementById('progressText').textContent = 'Upload successful! Redirecting...';
-            console.log('Redirecting to:', `/rack/${data.rack_id}`); // Debug log
+            // Store analysis result for later completion
+            window.analysisResult = data;
+            
+            // Show metadata form
+            document.getElementById('user-info-form').style.display = 'block';
+            document.getElementById('progressSection').style.display = 'none';
+            document.getElementById('progressText').textContent = 'Initial analysis complete! Please provide additional information.';
+        } else {
+            throw new Error(data.error || 'Initial analysis failed');
+        }
+    } catch (error) {
+        console.error('Upload error:', error);
+        alert('Initial analysis failed: ' + error.message);
+        document.getElementById('progressSection').style.display = 'none';
+        document.getElementById('user-info-form').style.display = 'block';
+    }
+}
+
+async function completeUpload() {
+    if (!window.analysisResult) {
+        alert('Please complete the initial analysis first.');
+        return;
+    }
+    
+    const userInfo = {
+        rack_type: document.getElementById('rack-type').value,
+        description: document.getElementById('rack-description').value,
+        tags: selectedTags,
+        // Additional fields for macro, chain, device names/descriptions if provided
+    };
+    
+    document.getElementById('progressSection').style.display = 'block';
+    document.getElementById('user-info-form').style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/analyze/complete', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                analysis: window.analysisResult.analysis,
+                filename: window.analysisResult.filename,
+                file_content: window.analysisResult.file_content,
+                user_info: userInfo
+            })
+        });
+
+        const data = await response.json();
+        console.log('Completion response:', data); // Debug log
+
+        if (data.success) {
+            document.getElementById('progressText').textContent = 'Analysis completed! Redirecting...';
+            console.log('Redirecting to:', `/rack/${data.rack_id}`);
             setTimeout(() => {
                 window.location.href = `/rack/${data.rack_id}`;
             }, 1500);
         } else {
-            throw new Error(data.error || 'Upload failed');
+            throw new Error(data.error || 'Completion failed');
         }
     } catch (error) {
-        console.error('Upload error:', error);
-        alert('Upload failed: ' + error.message);
+        console.error('Completion error:', error);
+        alert('Completion failed: ' + error.message);
         document.getElementById('progressSection').style.display = 'none';
         document.getElementById('user-info-form').style.display = 'block';
     }
