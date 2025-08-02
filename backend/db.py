@@ -38,7 +38,7 @@ class MongoDB:
             self.client.admin.command('ping')
             
             # Use database
-            self.db = self.client.ableton_rack_analyzer
+            self.db = self.client.abletonRackDB
             self.collection = self.db.racks
             self.users_collection = self.db.users
             
