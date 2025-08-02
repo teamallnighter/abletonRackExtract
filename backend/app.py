@@ -231,7 +231,11 @@ def analyze_rack():
             
             # Get user info from form data
             description = request.form.get('description', '').strip()
+            rack_type = request.form.get('rack_type', '').strip()
             tags_json = request.form.get('tags', '[]')
+            
+            # Debug log to see what's being received
+            logger.info(f"Form data received - description: '{description}', rack_type: '{rack_type}', tags_json: '{tags_json}'")
             
             # Parse tags
             try:
@@ -256,7 +260,7 @@ def analyze_rack():
                     pass  # User not authenticated, that's okay
             
             # Add user info to rack_info if provided
-            if description or username or tags:
+            if description or username or tags or rack_type:
                 rack_info['user_info'] = {}
                 if description:
                     rack_info['user_info']['description'] = description
@@ -264,6 +268,8 @@ def analyze_rack():
                     rack_info['user_info']['producer_name'] = username
                 if tags:
                     rack_info['user_info']['tags'] = tags
+                if rack_type:
+                    rack_info['user_info']['rack_type'] = rack_type
             
             # Save to MongoDB
             try:

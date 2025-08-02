@@ -110,6 +110,8 @@ class MongoDB:
                     document['producer_name'] = rack_info['user_info']['producer_name']
                 if 'tags' in rack_info['user_info']:
                     document['tags'] = rack_info['user_info']['tags']
+                if 'rack_type' in rack_info['user_info']:
+                    document['rack_type'] = rack_info['user_info']['rack_type']
             
             # Optionally store the original file content (base64 encoded)
             if file_content:
