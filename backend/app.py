@@ -34,6 +34,7 @@ from db import db
 # Import AI routes
 from ai_routes import ai_bp
 from semantic_routes import semantic_bp
+from admin_routes import admin_bp
 from openai_integration import RackAIAnalyzer
 from vector_storage import vector_storage
 
@@ -59,6 +60,7 @@ limiter = Limiter(get_remote_address, app=app, default_limits=["200 per day", "5
 # Register AI routes blueprint
 app.register_blueprint(ai_bp, url_prefix='/api')
 app.register_blueprint(semantic_bp, url_prefix='/api')
+app.register_blueprint(admin_bp, url_prefix='/api')
 
 # Configuration
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
