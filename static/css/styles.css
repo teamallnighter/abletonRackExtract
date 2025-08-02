@@ -1,7 +1,7 @@
 /* Global styles */
 :root {
-    --primary: #fbb902ff;
-    --secondary: #0d0d0d;
+    --primary: rgb(68, 0, 255);
+    --secondary: #00d5ff;
     --background: #a8a8a8;
     --surface: #cececeff;
     --surface-light: #cdf8ffff;
@@ -1322,9 +1322,8 @@ main,
 }
 
 .rack-detail-meta-item {
-    background: #2a2a2a;
     padding: 1rem;
-    border-radius: 4px;
+    border-radius: 20px;
 }
 
 .rack-detail-meta-label {
@@ -1338,9 +1337,8 @@ main,
 }
 
 .rack-detail-description {
-    background: #2a2a2a;
     padding: 1rem;
-    border-radius: 4px;
+    border-radius: 20px;
     margin-bottom: 1rem;
 }
 
