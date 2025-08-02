@@ -37,6 +37,10 @@ def backfill_embeddings():
         if not vector_storage.connect():
             return jsonify({'error': 'Failed to connect to vector storage'}), 500
         
+        # Ensure MongoDB connection
+        if not db.connect():
+            return jsonify({'error': 'Failed to connect to database'}), 500
+        
         # Get all racks
         all_racks = []
         cursor = db.collection.find({})
@@ -81,6 +85,10 @@ def backfill_embeddings():
 def get_stats():
     """Get system statistics"""
     try:
+        # Ensure MongoDB connection
+        if not db.connect():
+            return jsonify({'error': 'Failed to connect to database'}), 500
+
         # Get MongoDB stats
         total_racks = db.collection.count_documents({})
         racks_with_ai = db.collection.count_documents({'ai_analysis': {'$exists': True}})
