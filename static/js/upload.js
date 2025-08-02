@@ -265,6 +265,62 @@ function setupNavigation() {
     }
 }
 
+function collectStep3Data() {
+    const analysis = window.analysisResult.analysis;
+    const detailedInfo = {
+        chains: [],
+        devices: [],
+        macros: []
+    };
+    
+    // Collect chain data
+    if (analysis.chains) {
+        analysis.chains.forEach((chain, index) => {
+            const nameInput = document.getElementById(`chain-name-${index}`);
+            const descInput = document.getElementById(`chain-desc-${index}`);
+            if (nameInput || descInput) {
+                detailedInfo.chains.push({
+                    index: index,
+                    name: nameInput ? nameInput.value : chain.name,
+                    description: descInput ? descInput.value : ''
+                });
+            }
+        });
+    }
+    
+    // Collect device data
+    if (analysis.devices) {
+        analysis.devices.forEach((device, index) => {
+            const nameInput = document.getElementById(`device-name-${index}`);
+            const descInput = document.getElementById(`device-desc-${index}`);
+            if (nameInput || descInput) {
+                detailedInfo.devices.push({
+                    index: index,
+                    name: nameInput ? nameInput.value : device.name,
+                    description: descInput ? descInput.value : ''
+                });
+            }
+        });
+    }
+    
+    // Collect macro data
+    if (analysis.macros) {
+        analysis.macros.forEach((macro, index) => {
+            const nameInput = document.getElementById(`macro-name-${index}`);
+            const descInput = document.getElementById(`macro-desc-${index}`);
+            if (nameInput || descInput) {
+                detailedInfo.macros.push({
+                    index: index,
+                    name: nameInput ? nameInput.value : macro.name,
+                    description: descInput ? descInput.value : ''
+                });
+            }
+        });
+    }
+    
+    return detailedInfo;
+}
+
 function populateStep3() {
     if (!window.analysisResult || !window.analysisResult.analysis) {
         return;
@@ -272,17 +328,69 @@ function populateStep3() {
     
     const analysis = window.analysisResult.analysis;
     const step3 = document.getElementById('step-3');
-    let detailsHtml = '';
+    
+    // Clear any previous content
+    const existingContent = step3.querySelector('.rack-details-container');
+    if (existingContent) {
+        existingContent.remove();
+    }
+    
+    let detailsHtml = '<div class="rack-details-container">';
+    
+    // Add rack visualization
+    detailsHtml += `
+        <div class="rack-preview">
+            <h4>Rack Structure</h4>
+            <div class="rack-stats">
+                <span class="stat-badge">${analysis.chains ? analysis.chains.length : 0} Chains</span>
+                <span class="stat-badge">${analysis.devices ? analysis.devices.length : 0} Devices</span>
+                <span class="stat-badge">${analysis.macros ? analysis.macros.length : 0} Macros</span>
+            </div>
+            <div class="chains-visualization">
+    `;
+    
+    // Show chain structure visually
+    if (analysis.chains && analysis.chains.length > 0) {
+        analysis.chains.forEach((chain, chainIndex) => {
+            detailsHtml += `
+                <div class="chain-preview">
+                    <div class="chain-header">Chain ${chainIndex + 1}: ${chain.name || 'Chain ' + (chainIndex + 1)}</div>
+                    <div class="devices-in-chain">
+            `;
+            
+            // Show devices in this chain
+            if (chain.devices && chain.devices.length > 0) {
+                chain.devices.forEach((device, deviceIndex) => {
+                    detailsHtml += `<div class="device-block">${device.name || 'Device'}</div>`;
+                });
+            } else {
+                detailsHtml += `<div class="empty-chain">No devices</div>`;
+            }
+            
+            detailsHtml += `
+                    </div>
+                </div>
+            `;
+        });
+    }
+    
+    detailsHtml += `
+            </div>
+        </div>
+    `;
+    
+    // Add editable sections
+    detailsHtml += '<div class="editable-sections">';
     
     // Add chains section
     if (analysis.chains && analysis.chains.length > 0) {
-        detailsHtml += '<div class="details-section"><h4>Chains</h4>';
+        detailsHtml += '<div class="details-section"><h4>Chain Names & Descriptions</h4>';
         analysis.chains.forEach((chain, index) => {
             detailsHtml += `
-                <div class="form-group">
-                    <label>Chain ${index + 1}: ${chain.name || 'Unnamed'}</label>
-                    <input type="text" id="chain-name-${index}" value="${chain.name || ''}" placeholder="Chain name">
-                    <textarea id="chain-desc-${index}" rows="2" placeholder="Chain description"></textarea>
+                <div class="form-group chain-edit">
+                    <label>Chain ${index + 1}</label>
+                    <input type="text" id="chain-name-${index}" value="${chain.name || ''}" placeholder="Enter chain name">
+                    <textarea id="chain-desc-${index}" rows="2" placeholder="Describe what this chain does..."></textarea>
                 </div>
             `;
         });
@@ -291,13 +399,13 @@ function populateStep3() {
     
     // Add devices section
     if (analysis.devices && analysis.devices.length > 0) {
-        detailsHtml += '<div class="details-section"><h4>Devices</h4>';
+        detailsHtml += '<div class="details-section"><h4>Device Names & Descriptions</h4>';
         analysis.devices.forEach((device, index) => {
             detailsHtml += `
-                <div class="form-group">
-                    <label>Device: ${device.name || 'Unnamed'}</label>
-                    <input type="text" id="device-name-${index}" value="${device.name || ''}" placeholder="Device name">
-                    <textarea id="device-desc-${index}" rows="2" placeholder="Device description"></textarea>
+                <div class="form-group device-edit">
+                    <label>${device.name || 'Device ' + (index + 1)}</label>
+                    <input type="text" id="device-name-${index}" value="${device.name || ''}" placeholder="Enter device name">
+                    <textarea id="device-desc-${index}" rows="2" placeholder="Describe device settings or purpose..."></textarea>
                 </div>
             `;
         });
@@ -306,24 +414,26 @@ function populateStep3() {
     
     // Add macros section
     if (analysis.macros && analysis.macros.length > 0) {
-        detailsHtml += '<div class="details-section"><h4>Macros</h4>';
+        detailsHtml += '<div class="details-section"><h4>Macro Names & Descriptions</h4>';
         analysis.macros.forEach((macro, index) => {
             detailsHtml += `
-                <div class="form-group">
-                    <label>Macro ${index + 1}: ${macro.name || 'Unnamed'}</label>
-                    <input type="text" id="macro-name-${index}" value="${macro.name || ''}" placeholder="Macro name">
-                    <textarea id="macro-desc-${index}" rows="2" placeholder="Macro description"></textarea>
+                <div class="form-group macro-edit">
+                    <label>Macro ${index + 1}</label>
+                    <input type="text" id="macro-name-${index}" value="${macro.name || ''}" placeholder="Enter macro name">
+                    <textarea id="macro-desc-${index}" rows="2" placeholder="Describe what this macro controls..."></textarea>
                 </div>
             `;
         });
         detailsHtml += '</div>';
     }
     
-    // Insert the HTML before the submit button
-    const submitBtn = step3.querySelector('#final-submit');
+    detailsHtml += '</div></div>'; // Close editable-sections and rack-details-container
+    
+    // Insert the HTML before the form actions
+    const formActions = step3.querySelector('.form-actions');
     const container = document.createElement('div');
     container.innerHTML = detailsHtml;
-    step3.insertBefore(container, submitBtn);
+    step3.insertBefore(container, formActions);
 }
 
 async function completeUpload() {
