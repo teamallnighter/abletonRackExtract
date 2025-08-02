@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupDropZone();
     setupTagInput();
     setupUploadButton();
+    setupNavigation();
 });
 
 function setupDropZone() {
@@ -198,10 +199,9 @@ async function performInitialAnalysis() {
         headers['Authorization'] = `Bearer ${token}`;
     }
     
-    // Show progress
-    document.getElementById('progressSection').style.display = 'block';
-    // Hide the form
-    document.getElementById('user-info-form').style.display = 'none';
+// Advance to Step 2
+    document.getElementById('step-1').style.display = 'none';
+    document.getElementById('step-2').style.display = 'block';
     
     try {
         const response = await fetch('/api/analyze', {
@@ -217,10 +217,8 @@ async function performInitialAnalysis() {
             // Store analysis result for later completion
             window.analysisResult = data;
             
-            // Show metadata form
-            document.getElementById('user-info-form').style.display = 'block';
+            // Analysis complete, user is already on step 2
             document.getElementById('progressSection').style.display = 'none';
-            document.getElementById('progressText').textContent = 'Initial analysis complete! Please provide additional information.';
         } else {
             throw new Error(data.error || 'Initial analysis failed');
         }
@@ -228,8 +226,104 @@ async function performInitialAnalysis() {
         console.error('Upload error:', error);
         alert('Initial analysis failed: ' + error.message);
         document.getElementById('progressSection').style.display = 'none';
-        document.getElementById('user-info-form').style.display = 'block';
+        // Stay on step 2 if analysis fails
+        document.getElementById('step-1').style.display = 'none';
+        document.getElementById('step-2').style.display = 'block';
     }
+}
+
+function setupNavigation() {
+    const nextToStep3Btn = document.getElementById('next-to-step-3');
+    const backToStep2Btn = document.getElementById('back-to-step-2');
+    const finalSubmitBtn = document.getElementById('final-submit');
+
+    if (nextToStep3Btn) {
+        nextToStep3Btn.addEventListener('click', function() {
+            // Validate step 2 inputs before proceeding
+            const rackType = document.getElementById('rack-type').value;
+            if (!rackType) {
+                alert('Please select a rack type.');
+                return;
+            }
+            
+            // Move to step 3 and populate it with analysis data
+            document.getElementById('step-2').style.display = 'none';
+            document.getElementById('step-3').style.display = 'block';
+            populateStep3();
+        });
+    }
+
+    if (backToStep2Btn) {
+        backToStep2Btn.addEventListener('click', function() {
+            document.getElementById('step-3').style.display = 'none';
+            document.getElementById('step-2').style.display = 'block';
+        });
+    }
+
+    if (finalSubmitBtn) {
+        finalSubmitBtn.addEventListener('click', completeUpload);
+    }
+}
+
+function populateStep3() {
+    if (!window.analysisResult || !window.analysisResult.analysis) {
+        return;
+    }
+    
+    const analysis = window.analysisResult.analysis;
+    const step3 = document.getElementById('step-3');
+    let detailsHtml = '';
+    
+    // Add chains section
+    if (analysis.chains && analysis.chains.length > 0) {
+        detailsHtml += '<div class="details-section"><h4>Chains</h4>';
+        analysis.chains.forEach((chain, index) => {
+            detailsHtml += `
+                <div class="form-group">
+                    <label>Chain ${index + 1}: ${chain.name || 'Unnamed'}</label>
+                    <input type="text" id="chain-name-${index}" value="${chain.name || ''}" placeholder="Chain name">
+                    <textarea id="chain-desc-${index}" rows="2" placeholder="Chain description"></textarea>
+                </div>
+            `;
+        });
+        detailsHtml += '</div>';
+    }
+    
+    // Add devices section
+    if (analysis.devices && analysis.devices.length > 0) {
+        detailsHtml += '<div class="details-section"><h4>Devices</h4>';
+        analysis.devices.forEach((device, index) => {
+            detailsHtml += `
+                <div class="form-group">
+                    <label>Device: ${device.name || 'Unnamed'}</label>
+                    <input type="text" id="device-name-${index}" value="${device.name || ''}" placeholder="Device name">
+                    <textarea id="device-desc-${index}" rows="2" placeholder="Device description"></textarea>
+                </div>
+            `;
+        });
+        detailsHtml += '</div>';
+    }
+    
+    // Add macros section
+    if (analysis.macros && analysis.macros.length > 0) {
+        detailsHtml += '<div class="details-section"><h4>Macros</h4>';
+        analysis.macros.forEach((macro, index) => {
+            detailsHtml += `
+                <div class="form-group">
+                    <label>Macro ${index + 1}: ${macro.name || 'Unnamed'}</label>
+                    <input type="text" id="macro-name-${index}" value="${macro.name || ''}" placeholder="Macro name">
+                    <textarea id="macro-desc-${index}" rows="2" placeholder="Macro description"></textarea>
+                </div>
+            `;
+        });
+        detailsHtml += '</div>';
+    }
+    
+    // Insert the HTML before the submit button
+    const submitBtn = step3.querySelector('#final-submit');
+    const container = document.createElement('div');
+    container.innerHTML = detailsHtml;
+    step3.insertBefore(container, submitBtn);
 }
 
 async function completeUpload() {
@@ -238,15 +332,20 @@ async function completeUpload() {
         return;
     }
     
+    // Collect data from step 3
+    const detailedInfo = collectStep3Data();
+    
     const userInfo = {
         rack_type: document.getElementById('rack-type').value,
         description: document.getElementById('rack-description').value,
         tags: selectedTags,
-        // Additional fields for macro, chain, device names/descriptions if provided
+        chains: detailedInfo.chains,
+        devices: detailedInfo.devices,
+        macros: detailedInfo.macros
     };
     
     document.getElementById('progressSection').style.display = 'block';
-    document.getElementById('user-info-form').style.display = 'none';
+    document.getElementById('step-3').style.display = 'none';
     
     try {
         const response = await fetch('/api/analyze/complete', {

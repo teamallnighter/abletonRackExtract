@@ -5,68 +5,83 @@
 {% block content %}
         <h1>Upload New Recipe</h1>
         
-        <div class="upload-section">
-            <div id="drop-zone" class="drop-zone">
-                <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-                <p>Drop .adg or .adv files here or click to browse</p>
-                <input type="file" id="file-input" accept=".adg,.adv" hidden>
-            </div>
-            
-            <div id="user-info-form" class="user-info-form">
-                <h3>Add Recipe Information</h3>
-                <div class="form-group">
-                    <label for="rack-type">Recipe Type <span class="required">*</span></label>
-                    <select id="rack-type" required>
-                        <option value="">Select a type...</option>
-                        <option value="Audio Effect Rack">Audio Effect Rack</option>
-                        <option value="Instrument Rack">Instrument Rack</option>
-                        <option value="MIDI Effect Rack">MIDI Effect Rack</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="rack-description">What does this recipe do?</label>
-                    <textarea id="rack-description" rows="4" placeholder="Describe the purpose and functionality of this recipe..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="rack-tags">Tags</label>
-                    <div class="tag-input-container">
-                        <div id="selected-tags" class="selected-tags"></div>
-                        <input type="text" id="tag-input" placeholder="Add tags (e.g., reverb, delay, mixing)..." autocomplete="off">
-                    </div>
-                    <div id="tag-suggestions" class="tag-suggestions hidden"></div>
-                    <div class="suggested-tags">
-                        <span class="suggested-label">Popular tags:</span>
-                        <span class="tag-suggestion" data-tag="mixing">mixing</span>
-                        <span class="tag-suggestion" data-tag="mastering">mastering</span>
-                        <span class="tag-suggestion" data-tag="reverb">reverb</span>
-                        <span class="tag-suggestion" data-tag="delay">delay</span>
-                        <span class="tag-suggestion" data-tag="distortion">distortion</span>
-                        <span class="tag-suggestion" data-tag="eq">eq</span>
-                        <span class="tag-suggestion" data-tag="compression">compression</span>
-                        <span class="tag-suggestion" data-tag="stereo-width">stereo width</span>
-                        <span class="tag-suggestion" data-tag="resampling">resampling</span>
-                        <span class="tag-suggestion" data-tag="glitch">glitch</span>
-                    </div>
-                </div>
-                <div class="form-actions">
-                    <button id="skip-info" class="btn btn-secondary">Skip</button>
-                    <button id="submit-info" class="btn btn-primary">Analyze Recipe</button>
-                </div>
-            </div>
+<div class="upload-section">
+    <!-- Step 1: File Upload -->
+    <div id="step-1" class="step">
+        <h3>Step 1: Upload Rack File</h3>
+        <div id="drop-zone" class="drop-zone">
+            <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <p>Drop .adg or .adv files here or click to browse</p>
+            <input type="file" id="file-input" accept=".adg,.adv" hidden>
         </div>
+    </div>
 
-        <div id="progressSection" class="progress-section" style="display: none;">
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
+    <!-- Step 2: Basic Information -->
+    <div id="step-2" class="step" style="display: none;">
+        <h3>Step 2: Add Basic Information</h3>
+        <div class="form-group">
+            <label for="rack-type">Rack Type <span class="required">*</span></label>
+            <select id="rack-type" required>
+                <option value="">Select a type...</option>
+                <option value="Audio Effect Rack">Audio Effect Rack</option>
+                <option value="Instrument Rack">Instrument Rack</option>
+                <option value="MIDI Effect Rack">MIDI Effect Rack</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="rack-description">Description</label>
+            <textarea id="rack-description" rows="4" placeholder="Describe the purpose and functionality..."></textarea>
+        </div>
+        <div class="form-group">
+            <label for="rack-tags">Tags</label>
+            <div class="tag-input-container">
+                <div id="selected-tags" class="selected-tags"></div>
+                <input type="text" id="tag-input" placeholder="Add tags (e.g., reverb, delay, mixing)..." autocomplete="off">
             </div>
-            <p id="progressText">Uploading...</p>
+            <div id="tag-suggestions" class="tag-suggestions hidden"></div>
+            <div class="suggested-tags">
+                <span class="suggested-label">Popular tags:</span>
+                <span class="tag-suggestion" data-tag="mixing">mixing</span>
+                <span class="tag-suggestion" data-tag="mastering">mastering</span>
+                <span class="tag-suggestion" data-tag="reverb">reverb</span>
+                <span class="tag-suggestion" data-tag="delay">delay</span>
+                <span class="tag-suggestion" data-tag="distortion">distortion</span>
+                <span class="tag-suggestion" data-tag="eq">eq</span>
+                <span class="tag-suggestion" data-tag="compression">compression</span>
+                <span class="tag-suggestion" data-tag="stereo-width">stereo width</span>
+                <span class="tag-suggestion" data-tag="resampling">resampling</span>
+                <span class="tag-suggestion" data-tag="glitch">glitch</span>
+            </div>
         </div>
+        <div class="form-actions">
+            <button id="next-to-step-3" class="btn btn-primary">Next</button>
+        </div>
+    </div>
 
-        <div id="results" class="results-section" style="display: none;">
-            <!-- Results will be populated here -->
+    <!-- Step 3: Detailed Information -->
+    <div id="step-3" class="step" style="display: none;">
+        <h3>Step 3: Add Descriptions for Chains, Devices, and Macros</h3>
+        <p class="step-description">Optionally add custom names and descriptions for the components in your rack. This helps others understand how to use your recipe.</p>
+        <!-- Detailed input fields for chains, devices, and macros will be dynamically populated here -->
+        <div class="form-actions">
+            <button id="back-to-step-2" class="btn btn-secondary">Back</button>
+            <button id="final-submit" class="btn btn-primary">Complete Upload</button>
         </div>
+    </div>
+</div>
+
+<div id="progressSection" class="progress-section" style="display: none;">
+    <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <p id="progressText">Uploading...</p>
+</div>
+
+<div id="results" class="results-section" style="display: none;">
+    <!-- Results will be populated here -->
+</div>
 {% endblock %}
 
 {% block scripts %}
