@@ -1,74 +1,79 @@
 """
 Vector storage integration for semantic search and recommendations
-Using Pinecone for vector database
+Using ChromaDB for vector database
 """
 
 import os
 import logging
 from typing import List, Dict, Optional
-from pinecone import Pinecone, ServerlessSpec
+import chromadb
+from chromadb.config import Settings
 from openai import OpenAI
 import numpy as np
 
 logger = logging.getLogger(__name__)
 
 class VectorStorage:
-    """Manages vector embeddings for rack analysis using Pinecone"""
+    """Manages vector embeddings for rack analysis using ChromaDB"""
     
     def __init__(self):
-        # Initialize Pinecone
-        self.pinecone_api_key = os.getenv('PINECONE_API_KEY')
-        self.pinecone_environment = os.getenv('PINECONE_ENVIRONMENT', 'us-east-1-aws')
-        self.index_name = os.getenv('PINECONE_INDEX_NAME', 'ableton-racks')
+        # Initialize ChromaDB settings
+        self.persist_directory = os.getenv('CHROMA_PERSIST_DIRECTORY', './chroma_db')
+        self.collection_name = os.getenv('CHROMA_COLLECTION_NAME', 'ableton_racks')
         
         # Initialize OpenAI for embeddings
         self.openai_api_key = os.getenv('OPENAI_API_KEY')
         self.openai_client = OpenAI(api_key=self.openai_api_key)
         
-        self.index = None
+        self.client = None
+        self.collection = None
         self.initialized = False
         
     def connect(self):
-        """Initialize Pinecone connection"""
-        if not self.pinecone_api_key:
-            logger.error("Pinecone API key not found in environment variables")
-            return False
-            
+        """Initialize ChromaDB connection"""
         try:
-            # Initialize Pinecone
-            pc = Pinecone(api_key=self.pinecone_api_key)
-            
-            # Check if index exists
-            existing_indexes = pc.list_indexes().names()
-            if self.index_name not in existing_indexes:
-                logger.info(f"Creating Pinecone index: {self.index_name}")
-                try:
-                    pc.create_index(
-                        name=self.index_name,
-                        dimension=1536,  # OpenAI embedding dimension
-                        metric='cosine',
-                        spec=ServerlessSpec(
-                            cloud='aws',
-                            region='us-east-1'
-                        )
+            # Initialize ChromaDB client
+            if self.persist_directory and self.persist_directory != ':memory:':
+                # Persistent storage
+                self.client = chromadb.PersistentClient(
+                    path=self.persist_directory,
+                    settings=Settings(
+                        anonymized_telemetry=False,
+                        allow_reset=True
                     )
-                except Exception as create_error:
-                    logger.error(f"Failed to create index: {create_error}")
-                    # If we can't create, try to use the first available index
-                    if existing_indexes:
-                        self.index_name = existing_indexes[0]
-                        logger.info(f"Using existing index: {self.index_name}")
-                    else:
-                        raise
+                )
+                logger.info(f"Using persistent ChromaDB at {self.persist_directory}")
+            else:
+                # In-memory storage (good for testing)
+                self.client = chromadb.Client(
+                    Settings(
+                        is_persistent=False,
+                        anonymized_telemetry=False
+                    )
+                )
+                logger.info("Using in-memory ChromaDB")
             
-            # Connect to index
-            self.index = pc.Index(self.index_name)
+            # Get or create collection
+            try:
+                self.collection = self.client.get_collection(
+                    name=self.collection_name,
+                    embedding_function=None  # We'll provide embeddings directly
+                )
+                logger.info(f"Connected to existing collection: {self.collection_name}")
+            except:
+                self.collection = self.client.create_collection(
+                    name=self.collection_name,
+                    metadata={"hnsw:space": "cosine"},
+                    embedding_function=None  # We'll provide embeddings directly
+                )
+                logger.info(f"Created new collection: {self.collection_name}")
+            
             self.initialized = True
-            logger.info("Successfully connected to Pinecone")
+            logger.info("Successfully connected to ChromaDB")
             return True
             
         except Exception as e:
-            logger.error(f"Failed to connect to Pinecone: {e}")
+            logger.error(f"Failed to connect to ChromaDB: {e}")
             return False
     
     def generate_embedding(self, text: str) -> Optional[List[float]]:
@@ -122,7 +127,7 @@ class VectorStorage:
         return " | ".join(text_parts)
     
     def store_rack_embedding(self, rack_id: str, rack: Dict) -> bool:
-        """Store rack embedding in Pinecone"""
+        """Store rack embedding in ChromaDB"""
         if not self.initialized:
             if not self.connect():
                 return False
@@ -138,19 +143,22 @@ class VectorStorage:
             
             # Prepare metadata
             metadata = {
-                'rack_id': rack_id,
                 'rack_name': rack.get('rack_name', 'Unknown'),
                 'producer_name': rack.get('producer_name', 'Unknown'),
                 'rack_type': rack.get('rack_type', 'Unknown'),
                 'tags': ','.join(rack.get('tags', [])),
                 'total_devices': rack.get('stats', {}).get('total_devices', 0),
                 'total_chains': rack.get('stats', {}).get('total_chains', 0),
-                'macro_controls': rack.get('stats', {}).get('macro_controls', 0)
+                'macro_controls': rack.get('stats', {}).get('macro_controls', 0),
+                'embedding_text': embedding_text[:1000]  # Store partial text for reference
             }
             
-            # Store in Pinecone
-            self.index.upsert(
-                vectors=[(rack_id, embedding, metadata)]
+            # Store in ChromaDB
+            self.collection.upsert(
+                ids=[rack_id],
+                embeddings=[embedding],
+                metadatas=[metadata],
+                documents=[embedding_text]  # ChromaDB can also store the original text
             )
             
             logger.info(f"Stored embedding for rack {rack_id}")
@@ -172,30 +180,38 @@ class VectorStorage:
             if not query_embedding:
                 return []
             
-            # Search in Pinecone
-            results = self.index.query(
-                vector=query_embedding,
-                top_k=top_k,
-                include_metadata=True,
-                filter=filters
+            # Build where clause for filters
+            where_clause = None
+            if filters:
+                # ChromaDB uses a different filter syntax
+                # Example: filters = {"rack_type": "Instrument"}
+                where_clause = filters
+            
+            # Search in ChromaDB
+            results = self.collection.query(
+                query_embeddings=[query_embedding],
+                n_results=top_k,
+                where=where_clause
             )
             
             # Format results
             similar_racks = []
-            for match in results.matches:
-                similar_racks.append({
-                    'rack_id': match.metadata['rack_id'],
-                    'rack_name': match.metadata['rack_name'],
-                    'producer_name': match.metadata['producer_name'],
-                    'rack_type': match.metadata['rack_type'],
-                    'tags': match.metadata['tags'].split(',') if match.metadata['tags'] else [],
-                    'similarity_score': match.score,
-                    'stats': {
-                        'total_devices': match.metadata['total_devices'],
-                        'total_chains': match.metadata['total_chains'],
-                        'macro_controls': match.metadata['macro_controls']
-                    }
-                })
+            if results['ids'] and len(results['ids'][0]) > 0:
+                for i in range(len(results['ids'][0])):
+                    metadata = results['metadatas'][0][i]
+                    similar_racks.append({
+                        'rack_id': results['ids'][0][i],
+                        'rack_name': metadata.get('rack_name', 'Unknown'),
+                        'producer_name': metadata.get('producer_name', 'Unknown'),
+                        'rack_type': metadata.get('rack_type', 'Unknown'),
+                        'tags': metadata.get('tags', '').split(',') if metadata.get('tags') else [],
+                        'similarity_score': 1 - results['distances'][0][i],  # Convert distance to similarity
+                        'stats': {
+                            'total_devices': metadata.get('total_devices', 0),
+                            'total_chains': metadata.get('total_chains', 0),
+                            'macro_controls': metadata.get('macro_controls', 0)
+                        }
+                    })
             
             return similar_racks
             
@@ -217,29 +233,30 @@ class VectorStorage:
                 return []
             
             # Search for similar racks (excluding the current rack)
-            results = self.index.query(
-                vector=query_embedding,
-                top_k=top_k + 1,  # Get one extra to exclude self
-                include_metadata=True
+            results = self.collection.query(
+                query_embeddings=[query_embedding],
+                n_results=top_k + 1  # Get one extra to exclude self
             )
             
             # Format results, excluding the query rack itself
             similar_racks = []
-            for match in results.matches:
-                if match.metadata['rack_id'] != rack_id:
-                    similar_racks.append({
-                        'rack_id': match.metadata['rack_id'],
-                        'rack_name': match.metadata['rack_name'],
-                        'producer_name': match.metadata['producer_name'],
-                        'rack_type': match.metadata['rack_type'],
-                        'tags': match.metadata['tags'].split(',') if match.metadata['tags'] else [],
-                        'similarity_score': match.score,
-                        'stats': {
-                            'total_devices': match.metadata['total_devices'],
-                            'total_chains': match.metadata['total_chains'],
-                            'macro_controls': match.metadata['macro_controls']
-                        }
-                    })
+            if results['ids'] and len(results['ids'][0]) > 0:
+                for i in range(len(results['ids'][0])):
+                    if results['ids'][0][i] != rack_id:
+                        metadata = results['metadatas'][0][i]
+                        similar_racks.append({
+                            'rack_id': results['ids'][0][i],
+                            'rack_name': metadata.get('rack_name', 'Unknown'),
+                            'producer_name': metadata.get('producer_name', 'Unknown'),
+                            'rack_type': metadata.get('rack_type', 'Unknown'),
+                            'tags': metadata.get('tags', '').split(',') if metadata.get('tags') else [],
+                            'similarity_score': 1 - results['distances'][0][i],  # Convert distance to similarity
+                            'stats': {
+                                'total_devices': metadata.get('total_devices', 0),
+                                'total_chains': metadata.get('total_chains', 0),
+                                'macro_controls': metadata.get('macro_controls', 0)
+                            }
+                        })
             
             return similar_racks[:top_k]
             
@@ -248,13 +265,13 @@ class VectorStorage:
             return []
     
     def delete_rack_embedding(self, rack_id: str) -> bool:
-        """Delete a rack embedding from Pinecone"""
+        """Delete a rack embedding from ChromaDB"""
         if not self.initialized:
             if not self.connect():
                 return False
         
         try:
-            self.index.delete(ids=[rack_id])
+            self.collection.delete(ids=[rack_id])
             logger.info(f"Deleted embedding for rack {rack_id}")
             return True
         except Exception as e:
