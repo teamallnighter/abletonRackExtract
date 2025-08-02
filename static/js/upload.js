@@ -92,6 +92,16 @@ function setupTagInput() {
             tagSuggestions.style.display = 'none';
         }
     });
+    
+    // Handle clicks on popular tags
+    document.querySelectorAll('.suggested-tags .tag-suggestion').forEach(tagEl => {
+        tagEl.addEventListener('click', function() {
+            const tag = this.getAttribute('data-tag');
+            if (tag && !selectedTags.includes(tag)) {
+                addTag(tag);
+            }
+        });
+    });
 }
 
 function addTag(tag) {
