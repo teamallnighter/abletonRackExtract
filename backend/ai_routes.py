@@ -7,7 +7,8 @@ from flask import Blueprint, jsonify, request
 import jwt
 from functools import wraps
 import os
-from openai_integration import RackAIAnalyzer
+import sys
+import traceback
 
 ai_bp = Blueprint('ai', __name__)
 
@@ -52,53 +53,71 @@ def get_ai_analyzer():
     global _ai_analyzer
     if _ai_analyzer is None:
         try:
+            from openai_integration import RackAIAnalyzer
             _ai_analyzer = RackAIAnalyzer()
+        except ImportError as e:
+            return None, f"Failed to import OpenAI integration: {str(e)}"
         except ValueError as e:
             # OpenAI API key not set
             return None, str(e)
+        except Exception as e:
+            return None, f"Failed to initialize AI analyzer: {str(e)}"
     return _ai_analyzer, None
 
 @ai_bp.route('/ai/status', methods=['GET'])
 def ai_status():
     """Check AI service status"""
     try:
+        # First check if OpenAI API key is set
+        api_key = os.getenv('OPENAI_API_KEY')
+        if not api_key:
+            return jsonify({
+                'status': 'error',
+                'message': 'OpenAI API key not configured',
+                'setup_instructions': 'Set OPENAI_API_KEY environment variable in Railway'
+            })
+        
         analyzer, error = get_ai_analyzer()
         
         if error:
             return jsonify({
                 'status': 'error',
-                'message': 'AI services not configured',
+                'message': 'AI services initialization failed',
                 'error': error,
-                'setup_instructions': 'Set OPENAI_API_KEY environment variable in Railway'
+                'setup_instructions': 'Check Railway logs for details'
             })
         
         return jsonify({
             'status': 'operational',
             'ai_provider': 'OpenAI',
-            'mongodb_connected': analyzer.mongodb.connected,
+            'mongodb_connected': analyzer.mongodb.connected if analyzer else False,
             'message': 'AI services are ready'
         })
     except Exception as e:
         return jsonify({
             'status': 'error',
             'message': 'Failed to check AI status',
-            'error': str(e)
+            'error': str(e),
+            'traceback': traceback.format_exc()
         }), 500
 
 @ai_bp.route('/ai/analyze/<rack_id>', methods=['GET'])
 @jwt_required()
 def analyze_rack(rack_id):
     """Analyze a single rack"""
-    analyzer, error = get_ai_analyzer()
-    if error:
-        return jsonify({'error': error}), 500
-    
-    result = analyzer.analyze_rack(rack_id)
-    
-    if 'error' in result:
-        return jsonify(result), 404 if 'not found' in result['error'] else 500
-    
-    return jsonify(result)
+    try:
+        analyzer, error = get_ai_analyzer()
+        if error:
+            return jsonify({'error': error}), 500
+        
+        result = analyzer.analyze_rack(rack_id)
+        
+        if 'error' in result:
+            return jsonify(result), 404 if 'not found' in result['error'] else 500
+        
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': f'Failed to analyze rack: {str(e)}'}), 500
 
 @ai_bp.route('/ai/compare', methods=['POST'])
 @jwt_required()
