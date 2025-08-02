@@ -226,36 +226,50 @@ class MongoDBFlowiseAdapter(RackDataFlowiseAdapter):
         
         # Get racks from MongoDB
         racks = self.mongodb.get_recent_racks(limit or 1000)
+        print(f"[DEBUG] Retrieved {len(racks)} racks from MongoDB")
         results = []
         
-        for rack in racks:
-            # Convert MongoDB rack to FlowiseAI format
-            rack_data = self._convert_mongodb_rack_to_features(rack)
-            flowise_data = self.prepare_rack_data_for_flowise(rack_data)
-            
-            # Add MongoDB ID to metadata
-            flowise_data['metadata']['mongodb_id'] = str(rack['_id'])
-            
-            # Save as temporary file for upload
-            temp_file = self.data_dir / f"rack_{rack.get('rack_name', 'unknown')}_{rack['_id']}.json"
-            with open(temp_file, 'w') as f:
-                json.dump(flowise_data, f)
+        # Check if data directory exists
+        if not self.data_dir.exists():
+            print(f"[DEBUG] Creating data directory: {self.data_dir}")
+            self.data_dir.mkdir(parents=True, exist_ok=True)
+        
+        for i, rack in enumerate(racks):
+            print(f"[DEBUG] Processing rack {i+1}/{len(racks)}: {rack.get('rack_name', 'Unknown')}")
             
             try:
+                # Convert MongoDB rack to FlowiseAI format
+                rack_data = self._convert_mongodb_rack_to_features(rack)
+                flowise_data = self.prepare_rack_data_for_flowise(rack_data)
+                
+                # Add MongoDB ID to metadata
+                flowise_data['metadata']['mongodb_id'] = str(rack['_id'])
+                
+                # Save as temporary file for upload
+                temp_file = self.data_dir / f"rack_{rack.get('rack_name', 'unknown')}_{rack['_id']}.json"
+                print(f"[DEBUG] Writing temp file: {temp_file}")
+                
+                with open(temp_file, 'w') as f:
+                    json.dump(flowise_data, f)
+                
+                print(f"[DEBUG] Uploading to FlowiseAI: {self.client.base_url}")
                 result = self.client.upload_document(
                     str(temp_file),
                     metadata=flowise_data['metadata']
                 )
                 results.append(result)
-                print(f"Uploaded rack: {rack.get('rack_name', 'Unknown')} (ID: {rack['_id']})")
+                print(f"[SUCCESS] Uploaded rack: {rack.get('rack_name', 'Unknown')} (ID: {rack['_id']})")
             except Exception as e:
-                print(f"Error uploading rack {rack['_id']}: {e}")
+                print(f"[ERROR] Failed to upload rack {rack['_id']}: {e}")
+                import traceback
+                print(traceback.format_exc())
             finally:
                 # Clean up temp file
                 if temp_file.exists():
                     temp_file.unlink()
+                    print(f"[DEBUG] Cleaned up temp file")
         
-        print(f"Synced {len(results)} racks to FlowiseAI")
+        print(f"[COMPLETE] Synced {len(results)} racks to FlowiseAI")
         return results
     
     def _convert_mongodb_rack_to_features(self, rack: Dict) -> Dict:

@@ -96,14 +96,31 @@ def sync_racks():
         limit = data.get('limit', 100)  # Default to 100 racks
         
         adapter = get_flowise_adapter()
+        
+        # Debug: Check MongoDB connection and racks
+        racks = adapter.mongodb.get_recent_racks(limit)
+        print(f"[DEBUG] Found {len(racks)} racks in MongoDB")
+        
+        # Debug: Check FlowiseAI client
+        print(f"[DEBUG] FlowiseAI URL: {adapter.client.base_url}")
+        print(f"[DEBUG] FlowiseAI API Key set: {bool(adapter.client.api_key)}")
+        
         results = adapter.sync_racks_to_flowise(limit)
         
         return jsonify({
             'success': True,
             'synced_count': len(results),
-            'message': f'Successfully synced {len(results)} racks to FlowiseAI'
+            'message': f'Successfully synced {len(results)} racks to FlowiseAI',
+            'debug': {
+                'mongodb_racks': len(racks),
+                'flowise_url': adapter.client.base_url,
+                'flowise_api_key_set': bool(adapter.client.api_key)
+            }
         })
     except Exception as e:
+        import traceback
+        print(f"[ERROR] Sync failed: {str(e)}")
+        print(traceback.format_exc())
         return jsonify({
             'success': False,
             'error': str(e)
