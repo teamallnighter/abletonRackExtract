@@ -304,8 +304,8 @@ function collectStep3Data() {
     }
     
     // Collect macro data
-    if (analysis.macros) {
-        analysis.macros.forEach((macro, index) => {
+    if (analysis.macro_controls) {
+        analysis.macro_controls.forEach((macro, index) => {
             const nameInput = document.getElementById(`macro-name-${index}`);
             const descInput = document.getElementById(`macro-desc-${index}`);
             if (nameInput || descInput) {
@@ -344,7 +344,7 @@ function populateStep3() {
             <div class="rack-stats">
                 <span class="stat-badge">${analysis.chains ? analysis.chains.length : 0} Chains</span>
                 <span class="stat-badge">${analysis.devices ? analysis.devices.length : 0} Devices</span>
-                <span class="stat-badge">${analysis.macros ? analysis.macros.length : 0} Macros</span>
+                <span class="stat-badge">${analysis.macro_controls ? analysis.macro_controls.length : 0} Macros</span>
             </div>
             <div class="chains-visualization">
     `;
@@ -413,12 +413,12 @@ function populateStep3() {
     }
     
     // Add macros section
-    if (analysis.macros && analysis.macros.length > 0) {
+    if (analysis.macro_controls && analysis.macro_controls.length > 0) {
         detailsHtml += '<div class="details-section"><h4>Macro Names & Descriptions</h4>';
-        analysis.macros.forEach((macro, index) => {
+        analysis.macro_controls.forEach((macro, index) => {
             detailsHtml += `
                 <div class="form-group macro-edit">
-                    <label>Macro ${index + 1}</label>
+                    <label>Macro ${index + 1}: ${macro.name || 'Unnamed'}</label>
                     <input type="text" id="macro-name-${index}" value="${macro.name || ''}" placeholder="Enter macro name">
                     <textarea id="macro-desc-${index}" rows="2" placeholder="Describe what this macro controls..."></textarea>
                 </div>
