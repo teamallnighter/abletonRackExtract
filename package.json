@@ -1,0 +1,16 @@
+{
+    "name": "ableton-rack-analyzer",
+    "version": "1.0.0",
+    "description": "Ableton Rack Analyzer with React frontend and Flask backend",
+    "scripts": {
+        "build": "./build.sh",
+        "dev:frontend": "cd frontend && npm run dev",
+        "dev:backend": "cd backend && python app.py",
+        "install:frontend": "cd frontend && npm install",
+        "install:backend": "cd backend && pip install -r requirements.txt"
+    },
+    "engines": {
+        "node": ">=18.0.0",
+        "npm": ">=8.0.0"
+    }
+}

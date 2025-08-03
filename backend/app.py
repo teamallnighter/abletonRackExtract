@@ -43,6 +43,12 @@ app = Flask(__name__,
            static_folder=str(project_root / 'static'),
            static_url_path='/static')
 
+# Configure React app serving
+react_static_folder = str(project_root / 'backend' / 'static' / 'react')
+if Path(react_static_folder).exists():
+    app.static_folder = react_static_folder
+    app.static_url_path = '/static'
+
 # Configure CORS with more restrictive settings
 CORS(app, resources={
     r"/api/*": {
@@ -120,13 +126,44 @@ def token_required(f):
     return decorated
 
 @app.route('/')
-def serve_index():
-    """Serve the main index.html"""
+def serve_react_app():
+    """Serve the React app"""
+    react_index = Path(app.static_folder) / 'index.html'
+    if react_index.exists():
+        return send_file(str(react_index))
+    else:
+        # Fallback to old template if React app not built
+        return render_template('index.html')
+
+# Serve React app for all non-API routes
+@app.route('/<path:path>')
+def serve_react_routes(path):
+    """Serve React app for all routes (SPA routing)"""
+    # Skip API routes
+    if path.startswith('api/'):
+        return jsonify({'error': 'API endpoint not found'}), 404
+    
+    # Try to serve static files first
+    static_file = Path(app.static_folder) / path
+    if static_file.exists() and static_file.is_file():
+        return send_file(str(static_file))
+    
+    # For all other routes, serve the React app (SPA routing)
+    react_index = Path(app.static_folder) / 'index.html'
+    if react_index.exists():
+        return send_file(str(react_index))
+    else:
+        return jsonify({'error': 'App not found'}), 404
+
+# Legacy template routes (keep for backward compatibility)
+@app.route('/legacy')
+def serve_legacy_index():
+    """Serve the legacy template-based index.html"""
     return render_template('index.html')
 
-@app.route('/search')
-def serve_search():
-    """Serve the search page"""
+@app.route('/legacy/search')
+def serve_legacy_search():
+    """Serve the legacy search page"""
     return render_template('search.html')
 
 @app.route('/api/racks/<rack_id>/favorite', methods=['POST'])
