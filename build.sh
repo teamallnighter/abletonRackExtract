@@ -18,6 +18,8 @@ cp -r frontend/dist/* backend/static/react/
 # Install Python dependencies
 echo "🐍 Installing Python dependencies..."
 cd backend
+pip install --upgrade pip
 pip install -r requirements.txt
+pip install gunicorn==21.2.0
 
 echo "✅ Build complete! Ready for Railway deployment."
