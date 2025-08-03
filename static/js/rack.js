@@ -1,5 +1,5 @@
 // Rack details page functionality
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     let currentRackData = null;
 
     // Helper function to format rack names (replace underscores with spaces)
@@ -67,16 +67,8 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('stat-devices').textContent = totalDevices;
             document.getElementById('stat-macros').textContent = macros.length;
 
-            // Render chains visualization
-            renderChains(chains);
-
-            // Render macro controls
-            if (macros.length > 0) {
-                renderMacros(macros);
-                document.getElementById('macro-controls').classList.remove('hidden');
-            } else {
-                document.getElementById('macro-controls').classList.add('hidden');
-            }
+            // Render rack visualization using the new RackVisualizer
+            renderRackVisualization(rack);
 
             // Show content
             document.getElementById('loading').classList.add('hidden');
@@ -94,55 +86,24 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('error-content').classList.remove('hidden');
     }
 
-    // Render chains visualization
-    function renderChains(chains) {
-        const container = document.getElementById('chains-container');
+    // Render rack visualization using RackVisualizer
+    function renderRackVisualization(rack) {
+        const container = document.getElementById('rack-visualizer');
 
-        if (chains.length === 0) {
-            container.innerHTML = '<p class="no-chains-message">No chains found</p>';
+        if (!container) {
+            console.error('Rack visualizer container not found');
             return;
         }
 
-        container.innerHTML = chains.map((chain, index) => `
-            <div class="chain">
-                <div class="chain-header">
-                    <span class="chain-name">${chain.name || `Chain ${index + 1}`}</span>
-                    ${chain.volume !== undefined ? `<span class="chain-volume">Vol: ${chain.volume}dB</span>` : ''}
-                </div>
-                <div class="devices">
-                    ${(chain.devices || []).map(device => `
-                        <div class="device">
-                            <div class="device-header">
-                                <span class="device-name">${device.name}</span>
-                            </div>
-                            ${device.parameters && Object.keys(device.parameters).length > 0 ? `
-                                <div class="device-params">
-                                    ${Object.entries(device.parameters).slice(0, 3).map(([key, value]) => 
-                                        `${key}: ${value}`
-                                    ).join(' • ')}
-                                    ${Object.keys(device.parameters).length > 3 ? ' ...' : ''}
-                                </div>
-                            ` : ''}
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `).join('');
-    }
+        // Create the rack visualizer instance
+        const visualizer = new RackVisualizer(container);
 
-    // Render macro controls
-    function renderMacros(macros) {
-        const container = document.getElementById('macro-list');
-
-        container.innerHTML = macros.map((macro, index) => `
-            <div class="macro-item">
-                <span>Macro ${index + 1}: ${macro.name || 'Unnamed'}</span>
-            </div>
-        `).join('');
+        // Render the rack
+        visualizer.render(rack);
     }
 
     // Download ADG file
-    window.downloadADG = function() {
+    window.downloadADG = function () {
         if (!currentRackData || !currentRackData._id) return;
 
         const link = document.createElement('a');
@@ -152,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Download JSON
-    window.downloadJSON = function() {
+    window.downloadJSON = function () {
         if (!currentRackData) return;
 
         const dataStr = JSON.stringify(currentRackData, null, 2);

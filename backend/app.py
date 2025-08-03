@@ -124,6 +124,11 @@ def home():
     """Home page"""
     return render_template('index.html')
 
+@app.route('/test_visualization.html')
+def test_visualization():
+    """Test visualization page"""
+    return send_file(os.path.join(project_root, 'test_visualization.html'))
+
 # Template routes
 @app.route('/search')
 def search_page():
