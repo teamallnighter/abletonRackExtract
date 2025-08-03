@@ -43,12 +43,6 @@ app = Flask(__name__,
            static_folder=str(project_root / 'static'),
            static_url_path='/static')
 
-# Configure React app serving
-react_static_folder = str(project_root / 'backend' / 'static' / 'react')
-if Path(react_static_folder).exists():
-    app.static_folder = react_static_folder
-    app.static_url_path = '/static'
-
 # Configure CORS with more restrictive settings
 CORS(app, resources={
     r"/api/*": {
