@@ -125,10 +125,10 @@ def home():
     return render_template('index.html')
 
 # Template routes
-@app.route('/upload')
-def upload_page():
-    """Upload page"""
-    return render_template('upload.html')
+@app.route('/search')
+def search_page():
+    """Search page"""
+    return render_template('search.html')
 
 @app.route('/legacy')
 def serve_legacy_index():
