@@ -120,36 +120,16 @@ def token_required(f):
     return decorated
 
 @app.route('/')
-def serve_react_app():
-    """Serve the React app"""
-    react_index = Path(app.static_folder) / 'index.html'
-    if react_index.exists():
-        return send_file(str(react_index))
-    else:
-        # Fallback to old template if React app not built
-        return render_template('index.html')
+def home():
+    """Home page"""
+    return render_template('index.html')
 
-# Serve React app for all non-API routes
-@app.route('/<path:path>')
-def serve_react_routes(path):
-    """Serve React app for all routes (SPA routing)"""
-    # Skip API routes
-    if path.startswith('api/'):
-        return jsonify({'error': 'API endpoint not found'}), 404
-    
-    # Try to serve static files first
-    static_file = Path(app.static_folder) / path
-    if static_file.exists() and static_file.is_file():
-        return send_file(str(static_file))
-    
-    # For all other routes, serve the React app (SPA routing)
-    react_index = Path(app.static_folder) / 'index.html'
-    if react_index.exists():
-        return send_file(str(react_index))
-    else:
-        return jsonify({'error': 'App not found'}), 404
+# Template routes
+@app.route('/upload')
+def upload_page():
+    """Upload page"""
+    return render_template('upload.html')
 
-# Legacy template routes (keep for backward compatibility)
 @app.route('/legacy')
 def serve_legacy_index():
     """Serve the legacy template-based index.html"""
