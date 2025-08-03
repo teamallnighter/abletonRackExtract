@@ -1,22 +1,15 @@
 # Nixpacks configuration for React + Flask app
 
 [phases.setup]
-nixPkgs = ["nodejs_18", "python39", "python39Packages.pip", "python39Packages.setuptools", "python39Packages.wheel"]
-
-[phases.install]
-cmds = [
-  "cd frontend && npm install",
-  "cd backend && pip install --no-cache-dir --upgrade pip setuptools wheel",
-  "cd backend && pip install --no-cache-dir -r requirements.txt"
-]
+nixPkgs = ["nodejs_18", "python39", "python39Packages.pip"]
 
 [phases.build]
 cmds = [
-  "cd frontend && npm run build",
+  "cd frontend && npm install && npm run build",
   "mkdir -p backend/static/react",
   "cp -r frontend/dist/* backend/static/react/",
-  "chmod +x start.sh"
+  "cd backend && pip install -r requirements.txt"
 ]
 
 [phases.start]
-cmd = "./start.sh"
+cmd = "cd backend && gunicorn app:app --bind 0.0.0.0:$PORT"
