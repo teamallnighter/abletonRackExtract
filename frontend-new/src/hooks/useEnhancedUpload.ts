@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthService } from '../services/auth';
+import { useRackStore } from '../stores/rackStore';
 import type { RackAnalysis } from '../types/rack';
 
 export interface EnhancedUploadMetadata {
@@ -56,6 +57,7 @@ export const useEnhancedUpload = () => {
   });
 
   const navigate = useNavigate();
+  const { setCurrentRack } = useRackStore();
 
   const setFile = (file: File | null) => {
     setState(prev => ({
@@ -132,9 +134,6 @@ export const useEnhancedUpload = () => {
 
       const response = await fetch('/api/upload/analyze', {
         method: 'POST',
-        headers: {
-          ...AuthService.getAuthHeaders(),
-        },
         body: formData,
       });
 
@@ -155,6 +154,16 @@ export const useEnhancedUpload = () => {
         progress: 100,
         currentStep: 3,
       }));
+
+      // Set the rack in the store for visualization
+      const rackDocument = {
+        _id: 'preview',
+        filename: state.file?.name || 'unknown',
+        analysis: result.analysis,
+        created_at: new Date().toISOString(),
+        stats: result.stats || {},
+      };
+      setCurrentRack(rackDocument as any);
 
       // Auto-populate metadata with suggestions
       setState(prev => ({
@@ -265,6 +274,7 @@ export const useEnhancedUpload = () => {
       saveError: null,
       progress: 0,
     });
+    setCurrentRack(null);
   };
 
   const applySuggestedTags = () => {

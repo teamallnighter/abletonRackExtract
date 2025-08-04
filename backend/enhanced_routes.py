@@ -492,8 +492,7 @@ def get_recommendations(current_user, user_id):
 # =============================================================================
 
 @enhanced_bp.route('/upload/analyze', methods=['POST'])
-@token_required
-def enhanced_analyze_upload(current_user):
+def enhanced_analyze_upload():
     """Enhanced upload analysis with metadata support"""
     try:
         from security import validate_file_upload
