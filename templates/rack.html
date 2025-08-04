@@ -5,7 +5,7 @@
 {% block main_class %}rack-page-container{% endblock %}
 
 {% block content %}
-    <a href="{{ url_for('serve_search') }}" class="back-link">← Back to Search</a>
+    <a href="{{ url_for('serve_legacy_search') }}" class="back-link">← Back to Search</a>
 
     <div class="rack-page-content">
         <div class="loading-spinner hidden" id="loading">
@@ -72,7 +72,7 @@
         <div id="error-content" class="hidden error-message">
             <h2>Rack not found</h2>
             <p>The requested rack could not be found.</p>
-            <a href="{{ url_for('serve_search') }}" class="btn btn-primary">Back to Search</a>
+            <a href="{{ url_for('serve_legacy_search') }}" class="btn btn-primary">Back to Search</a>
         </div>
     </div>
 {% endblock %}
