@@ -9,6 +9,7 @@ import SearchPage from './pages/SearchPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Upload from './pages/Upload';
+import EnhancedUpload from './pages/EnhancedUpload';
 import Profile from './pages/Profile';
 import Navbar from './components/layout/Navbar';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -45,6 +46,14 @@ function App() {
                     {/* Protected Routes */}
                     <Route 
                       path="/upload" 
+                      element={
+                        <ProtectedRoute>
+                          <EnhancedUpload />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/upload/legacy" 
                       element={
                         <ProtectedRoute>
                           <Upload />
