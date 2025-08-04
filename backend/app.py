@@ -121,8 +121,23 @@ def token_required(f):
 
 @app.route('/')
 def home():
-    """Home page"""
-    return render_template('index.html')
+    """Serve React frontend"""
+    return send_file(os.path.join(project_root, 'static', 'frontend', 'index.html'))
+
+@app.route('/<path:path>')
+def serve_frontend(path):
+    """Serve React frontend assets and handle client-side routing"""
+    # Check if it's an API route
+    if path.startswith('api/'):
+        return {'error': 'API endpoint not found'}, 404
+    
+    # Try to serve static assets first
+    static_file_path = os.path.join(project_root, 'static', 'frontend', path)
+    if os.path.exists(static_file_path) and os.path.isfile(static_file_path):
+        return send_file(static_file_path)
+    
+    # For client-side routing, serve index.html
+    return send_file(os.path.join(project_root, 'static', 'frontend', 'index.html'))
 
 @app.route('/test_visualization.html')
 def test_visualization():
