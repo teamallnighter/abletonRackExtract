@@ -122,7 +122,18 @@ def token_required(f):
 @app.route('/')
 def home():
     """Serve React frontend"""
-    return send_file(os.path.join(project_root, 'static', 'frontend', 'index.html'))
+    try:
+        index_path = os.path.join(project_root, 'static', 'frontend', 'index.html')
+        logger.info(f"Attempting to serve index.html from: {index_path}")
+        logger.info(f"File exists: {os.path.exists(index_path)}")
+        logger.info(f"Project root: {project_root}")
+        if not os.path.exists(index_path):
+            logger.error(f"index.html not found at {index_path}")
+            return jsonify({"error": "Frontend not found", "path": str(index_path)}), 500
+        return send_file(index_path)
+    except Exception as e:
+        logger.error(f"Error serving frontend: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/<path:path>')
 def serve_frontend(path):
