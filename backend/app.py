@@ -35,8 +35,9 @@ from db import db
 from ai_routes import ai_bp
 from openai_integration import RackAIAnalyzer
 
-# Get the project root directory
+# Get the project root directory  
 project_root = Path(__file__).parent.parent
+backend_root = Path(__file__).parent
 
 app = Flask(__name__, 
            template_folder=str(project_root / 'templates'),
@@ -123,7 +124,7 @@ def token_required(f):
 def home():
     """Serve React frontend"""
     try:
-        index_path = os.path.join(project_root, 'static', 'frontend', 'index.html')
+        index_path = os.path.join(backend_root, 'static', 'frontend', 'index.html')
         logger.info(f"Attempting to serve index.html from: {index_path}")
         logger.info(f"File exists: {os.path.exists(index_path)}")
         logger.info(f"Project root: {project_root}")
@@ -143,12 +144,12 @@ def serve_frontend(path):
         return {'error': 'API endpoint not found'}, 404
     
     # Try to serve static assets first
-    static_file_path = os.path.join(project_root, 'static', 'frontend', path)
+    static_file_path = os.path.join(backend_root, 'static', 'frontend', path)
     if os.path.exists(static_file_path) and os.path.isfile(static_file_path):
         return send_file(static_file_path)
     
     # For client-side routing, serve index.html
-    return send_file(os.path.join(project_root, 'static', 'frontend', 'index.html'))
+    return send_file(os.path.join(backend_root, 'static', 'frontend', 'index.html'))
 
 @app.route('/test_visualization.html')
 def test_visualization():
