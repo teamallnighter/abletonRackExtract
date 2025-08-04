@@ -218,7 +218,7 @@ def serve_upload():
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
-    return jsonify({'status': 'healthy', 'message': 'Ableton Rack Analyzer API is running'})
+    return jsonify({'status': 'healthy', 'message': 'Ableton Rack Analyzer API is running', 'timestamp': '2025-08-04'})
 
 @app.route('/api/analyze', methods=['POST'])
 def analyze_rack_initial():
