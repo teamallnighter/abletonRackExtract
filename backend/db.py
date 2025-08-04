@@ -55,10 +55,9 @@ class MongoDB:
             
             # Enhanced indexes for new metadata fields
             self.collection.create_index('metadata.title')
-            self.collection.create_index('metadata.genre')
             self.collection.create_index('metadata.difficulty')
             self.collection.create_index('engagement.rating.average')
-            self.collection.create_index([('tags.user_tags', 1), ('metadata.genre', 1)])
+            self.collection.create_index([('tags.user_tags', 1), ('metadata.difficulty', 1)])
             
             # Text search index for enhanced search
             self.collection.create_index([
@@ -140,9 +139,6 @@ class MongoDB:
                 document['metadata'] = {
                     'title': enhanced_metadata.get('title', rack_info.get('rack_name', 'Unknown')),
                     'description': enhanced_metadata.get('description', ''),
-                    'genre': enhanced_metadata.get('genre'),
-                    'bpm': enhanced_metadata.get('bpm'),
-                    'key': enhanced_metadata.get('key'),
                     'difficulty': enhanced_metadata.get('difficulty'),
                     'copyright': enhanced_metadata.get('copyright'),
                     'version': enhanced_metadata.get('version', '1.0'),

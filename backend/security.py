@@ -146,24 +146,6 @@ def validate_metadata(metadata: dict) -> Tuple[bool, str]:
         if len(title) > 100:
             return False, "Title must be less than 100 characters"
     
-    # Validate genre
-    if 'genre' in metadata and metadata['genre']:
-        valid_genres = [
-            'house', 'techno', 'ambient', 'dubstep', 'drum-and-bass',
-            'trance', 'progressive', 'electro', 'minimal', 'garage',
-            'trap', 'hip-hop', 'pop', 'rock', 'jazz', 'classical', 'other'
-        ]
-        if metadata['genre'] not in valid_genres:
-            return False, f"Invalid genre. Must be one of: {', '.join(valid_genres)}"
-    
-    # Validate BPM
-    if 'bpm' in metadata and metadata['bpm']:
-        try:
-            bpm = float(metadata['bpm'])
-            if not (60 <= bpm <= 300):
-                return False, "BPM must be between 60 and 300"
-        except (ValueError, TypeError):
-            return False, "BPM must be a number"
     
     # Validate difficulty
     if 'difficulty' in metadata and metadata['difficulty']:

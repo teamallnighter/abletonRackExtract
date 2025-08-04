@@ -10,21 +10,10 @@ interface EnhancedMetadataFormProps {
   disabled?: boolean;
 }
 
-const GENRES = [
-  'house', 'techno', 'ambient', 'dubstep', 'drum-and-bass',
-  'trance', 'progressive', 'electro', 'minimal', 'garage',
-  'trap', 'hip-hop', 'pop', 'rock', 'jazz', 'classical', 'other'
-];
-
 const DIFFICULTIES = [
   { value: 'beginner', label: 'Beginner', description: 'Simple structure, few devices' },
   { value: 'intermediate', label: 'Intermediate', description: 'Moderate complexity' },
   { value: 'advanced', label: 'Advanced', description: 'Complex routing, many devices' },
-];
-
-const COMMON_KEYS = [
-  'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B',
-  'Cm', 'C#m', 'Dm', 'D#m', 'Em', 'Fm', 'F#m', 'Gm', 'G#m', 'Am', 'A#m', 'Bm'
 ];
 
 const COPYRIGHT_OPTIONS = [
@@ -128,71 +117,6 @@ const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
         </div>
       </div>
 
-      {/* Musical Properties */}
-      <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Musical Properties</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label htmlFor="genre" className="block text-sm font-medium text-gray-700 mb-2">
-              Genre
-            </label>
-            <select
-              id="genre"
-              value={metadata.genre || ''}
-              onChange={(e) => handleInputChange('genre', e.target.value)}
-              disabled={disabled}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors"
-            >
-              <option value="">Select Genre</option>
-              {GENRES.map(genre => (
-                <option key={genre} value={genre}>
-                  {genre.charAt(0).toUpperCase() + genre.slice(1).replace('-', ' ')}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="bpm" className="block text-sm font-medium text-gray-700 mb-2">
-              BPM
-            </label>
-            <input
-              id="bpm"
-              type="number"
-              min="60"
-              max="300"
-              value={metadata.bpm || ''}
-              onChange={(e) => handleInputChange('bpm', e.target.value ? parseInt(e.target.value) : undefined)}
-              disabled={disabled}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors"
-              placeholder="120"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="key" className="block text-sm font-medium text-gray-700 mb-2">
-              Key
-            </label>
-            <div className="relative">
-              <input
-                id="key"
-                type="text"
-                list="keys"
-                value={metadata.key || ''}
-                onChange={(e) => handleInputChange('key', e.target.value)}
-                disabled={disabled}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors"
-                placeholder="C, Am, etc."
-              />
-              <datalist id="keys">
-                {COMMON_KEYS.map(key => (
-                  <option key={key} value={key} />
-                ))}
-              </datalist>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Difficulty Level */}
       <div>

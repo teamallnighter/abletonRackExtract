@@ -7,9 +7,6 @@ import type { RackAnalysis } from '../types/rack';
 export interface EnhancedUploadMetadata {
   title?: string;
   description?: string;
-  genre?: string;
-  bpm?: number;
-  key?: string;
   difficulty?: 'beginner' | 'intermediate' | 'advanced';
   tags?: string[];
   copyright?: string;
@@ -208,9 +205,6 @@ export const useEnhancedUpload = () => {
         metadata: {
           title: state.metadata.title,
           description: state.metadata.description,
-          genre: state.metadata.genre?.toLowerCase(),
-          bpm: state.metadata.bpm,
-          key: state.metadata.key,
           difficulty: state.metadata.difficulty,
           tags: state.metadata.tags,
           copyright: state.metadata.copyright,

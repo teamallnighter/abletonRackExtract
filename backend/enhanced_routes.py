@@ -340,7 +340,6 @@ def advanced_search():
     try:
         # Get search parameters
         query = request.args.get('q', '')
-        genre = request.args.get('genre')
         difficulty = request.args.get('difficulty')
         min_rating = request.args.get('min_rating', type=float)
         device_type = request.args.get('device_type')
@@ -353,10 +352,6 @@ def advanced_search():
         # Text search
         if query:
             search_query['$text'] = {'$search': query}
-        
-        # Genre filter
-        if genre:
-            search_query['metadata.genre'] = genre
         
         # Difficulty filter
         if difficulty:
@@ -446,27 +441,27 @@ def get_recommendations(current_user, user_id):
         # Simple recommendation based on user's favorites and ratings
         # In a production system, this would use machine learning
         
-        # Get user's favorite genres and tags
+        # Get user's favorite tags and difficulty preferences
         user_favorites = db.get_user_favorites(user_id)
         if not user_favorites:
             # Fallback to popular racks
             recommendations = db.get_most_downloaded_racks(10)
         else:
-            # Extract common genres and tags from favorites
-            genres = []
+            # Extract common tags and difficulty levels from favorites
             tags = []
+            difficulties = []
             for fav in user_favorites:
-                if 'metadata' in fav and fav['metadata'].get('genre'):
-                    genres.append(fav['metadata']['genre'])
+                if 'metadata' in fav and fav['metadata'].get('difficulty'):
+                    difficulties.append(fav['metadata']['difficulty'])
                 if 'tags' in fav and 'user_tags' in fav['tags']:
                     tags.extend(fav['tags']['user_tags'])
             
             # Find racks with similar characteristics
             query = {}
-            if genres:
-                query['metadata.genre'] = {'$in': list(set(genres))}
-            elif tags:
+            if tags:
                 query['tags.user_tags'] = {'$in': list(set(tags[:5]))}  # Top 5 tags
+            elif difficulties:
+                query['metadata.difficulty'] = {'$in': list(set(difficulties))}
             
             if query:
                 cursor = db.collection.find(query).sort('engagement.rating.average', -1).limit(10)
@@ -607,7 +602,7 @@ def complete_enhanced_upload(current_user):
             return jsonify({'error': error_msg}), 400
         
         # Sanitize all text inputs
-        for key in ['title', 'description', 'genre', 'difficulty']:
+        for key in ['title', 'description', 'difficulty']:
             if key in enhanced_metadata and enhanced_metadata[key]:
                 enhanced_metadata[key] = sanitize_input(enhanced_metadata[key])
         
