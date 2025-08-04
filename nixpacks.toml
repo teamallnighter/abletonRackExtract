@@ -1,10 +1,10 @@
 [phases.setup]
-nixPkgs = ['nodejs_20', 'python39']
+nixPkgs = ['nodejs_20', 'python311']
 
 [phases.install]
 cmds = [
     'cd frontend-new && npm ci',
-    'pip install -r requirements.txt'
+    'python3 -m pip install -r requirements.txt'
 ]
 
 [phases.build]
