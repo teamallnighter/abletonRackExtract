@@ -6,7 +6,7 @@
     "watchPatterns": ["**"]
   },
   "deploy": {
-    "startCommand": "cd backend && gunicorn app:app --bind 0.0.0.0:$PORT --timeout 120",
+    "startCommand": "source /tmp/venv/bin/activate && cd backend && gunicorn app:app --bind 0.0.0.0:$PORT --timeout 120",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
