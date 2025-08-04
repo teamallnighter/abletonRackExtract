@@ -10,5 +10,5 @@ requests==2.32.4
 numpy==2.3.2
 python-dotenv==1.1.1
 openai
-pinecone-client==3.0.0
+pinecone-client==5.0.1
 tqdm==4.66.1
