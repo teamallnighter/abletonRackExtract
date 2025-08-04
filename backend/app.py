@@ -35,6 +35,9 @@ from db import db
 from ai_routes import ai_bp
 from openai_integration import RackAIAnalyzer
 
+# Import enhanced routes
+from enhanced_routes import enhanced_bp
+
 # Get the project root directory  
 project_root = Path(__file__).parent.parent
 backend_root = Path(__file__).parent
@@ -57,6 +60,9 @@ limiter = Limiter(get_remote_address, app=app, default_limits=["200 per day", "5
 
 # Register AI routes blueprint
 app.register_blueprint(ai_bp, url_prefix='/api')
+
+# Register enhanced routes blueprint
+app.register_blueprint(enhanced_bp, url_prefix='/api')
 
 # Configuration
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
