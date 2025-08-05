@@ -34,9 +34,8 @@ def jwt_required():
                 return jsonify({'error': 'Token is missing'}), 401
             
             try:
-                # Get secret key from environment or use default
-                secret_key = os.getenv('JWT_SECRET_KEY', 'your-secret-key')
-                data = jwt.decode(token, secret_key, algorithms=['HS256'])
+                from flask import current_app
+                data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
                 current_user_id = data['user_id']
             except jwt.ExpiredSignatureError:
                 return jsonify({'error': 'Token has expired'}), 401
