@@ -54,7 +54,7 @@ const MetadataForm: React.FC<MetadataFormProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Description */}
         <div className="md:col-span-2">
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="description" className="block text-sm font-medium text-text-secondary mb-2">
             Description
           </label>
           <textarea
@@ -63,14 +63,14 @@ const MetadataForm: React.FC<MetadataFormProps> = ({
             value={metadata.description || ''}
             onChange={(e) => handleInputChange('description', e.target.value)}
             disabled={disabled}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors"
+            className="w-full px-3 py-2 border border-border-primary rounded-md shadow-sm placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-border-focus focus:border-border-focus disabled:bg-gray-100 disabled:text-text-disabled text-text-primary transition-colors"
             placeholder="Describe your rack - what does it do? What style is it? How should it be used?"
           />
         </div>
 
         {/* Producer Name */}
         <div>
-          <label htmlFor="producer-name" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="producer-name" className="block text-sm font-medium text-text-secondary mb-2">
             Producer Name
           </label>
           <input
@@ -79,14 +79,14 @@ const MetadataForm: React.FC<MetadataFormProps> = ({
             value={metadata.producer_name || ''}
             onChange={(e) => handleInputChange('producer_name', e.target.value)}
             disabled={disabled}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors"
+            className="w-full px-3 py-2 border border-border-primary rounded-md shadow-sm placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-border-focus focus:border-border-focus disabled:bg-gray-100 disabled:text-text-disabled text-text-primary transition-colors"
             placeholder="Your producer name or alias"
           />
         </div>
 
         {/* Genre */}
         <div>
-          <label htmlFor="genre" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="genre" className="block text-sm font-medium text-text-secondary mb-2">
             Genre
           </label>
           <div className="relative">
@@ -97,7 +97,7 @@ const MetadataForm: React.FC<MetadataFormProps> = ({
               value={metadata.genre || ''}
               onChange={(e) => handleInputChange('genre', e.target.value)}
               disabled={disabled}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors"
+              className="w-full px-3 py-2 border border-border-primary rounded-md shadow-sm placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-border-focus focus:border-border-focus disabled:bg-gray-100 disabled:text-text-disabled text-text-primary transition-colors"
               placeholder="Electronic music genre"
             />
             <datalist id="genres">
@@ -110,7 +110,7 @@ const MetadataForm: React.FC<MetadataFormProps> = ({
 
         {/* BPM */}
         <div>
-          <label htmlFor="bpm" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="bpm" className="block text-sm font-medium text-text-secondary mb-2">
             BPM
           </label>
           <input
@@ -121,14 +121,14 @@ const MetadataForm: React.FC<MetadataFormProps> = ({
             value={metadata.bpm || ''}
             onChange={(e) => handleInputChange('bpm', e.target.value ? parseInt(e.target.value) : undefined)}
             disabled={disabled}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors"
+            className="w-full px-3 py-2 border border-border-primary rounded-md shadow-sm placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-border-focus focus:border-border-focus disabled:bg-gray-100 disabled:text-text-disabled text-text-primary transition-colors"
             placeholder="120"
           />
         </div>
 
         {/* Key */}
         <div>
-          <label htmlFor="key" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="key" className="block text-sm font-medium text-text-secondary mb-2">
             Key
           </label>
           <div className="relative">
@@ -139,7 +139,7 @@ const MetadataForm: React.FC<MetadataFormProps> = ({
               value={metadata.key || ''}
               onChange={(e) => handleInputChange('key', e.target.value)}
               disabled={disabled}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors"
+              className="w-full px-3 py-2 border border-border-primary rounded-md shadow-sm placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-border-focus focus:border-border-focus disabled:bg-gray-100 disabled:text-text-disabled text-text-primary transition-colors"
               placeholder="C major, Am, etc."
             />
             <datalist id="keys">
@@ -153,7 +153,7 @@ const MetadataForm: React.FC<MetadataFormProps> = ({
 
       {/* Tags */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-text-secondary mb-2">
           Tags
         </label>
         <div className="space-y-3">
@@ -165,7 +165,7 @@ const MetadataForm: React.FC<MetadataFormProps> = ({
               onChange={(e) => setTagInput(e.target.value)}
               onKeyPress={handleKeyPress}
               disabled={disabled}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors"
+              className="flex-1 px-3 py-2 border border-border-primary rounded-md shadow-sm placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-border-focus focus:border-border-focus disabled:bg-gray-100 disabled:text-text-disabled text-text-primary transition-colors"
               placeholder="Add tags (e.g., bass, synth, pad, lead)"
             />
             <button

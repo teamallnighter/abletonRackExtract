@@ -5,6 +5,22 @@ const CHAIN_WIDTH = 200;
 const CHAIN_SPACING = 300;
 const DEVICE_SPACING = 100;
 
+// Chain highlighting colors (following the PRD color scheme)
+const CHAIN_COLORS = [
+  '#10b981', // Emerald 500 (green)
+  '#3b82f6', // Blue 500 
+  '#f59e0b', // Amber 500 (yellow)
+  '#8b5cf6', // Violet 500 (purple)
+  '#ef4444', // Red 500
+  '#06b6d4', // Cyan 500
+  '#84cc16', // Lime 500
+  '#f97316', // Orange 500
+];
+
+export const getChainColor = (chainIndex: number): string => {
+  return CHAIN_COLORS[chainIndex % CHAIN_COLORS.length];
+};
+
 export const convertRackToFlow = (analysis: RackAnalysis): { nodes: RackFlowNode[], edges: RackFlowEdge[] } => {
   const nodes: RackFlowNode[] = [];
   const edges: RackFlowEdge[] = [];
@@ -29,6 +45,10 @@ export const convertRackToFlow = (analysis: RackAnalysis): { nodes: RackFlowNode
         label: chain.name || `Chain ${chainIndex + 1}`,
         type: 'chain',
         data: chain,
+        chainId: chainNodeId,
+        chainIndex: chainIndex,
+        chainName: chain.name || `Chain ${chainIndex + 1}`,
+        chainColor: getChainColor(chainIndex),
       }
     });
     
@@ -50,6 +70,10 @@ export const convertRackToFlow = (analysis: RackAnalysis): { nodes: RackFlowNode
           label: device.name,
           type: 'device',
           data: device,
+          chainId: chainNodeId,
+          chainIndex: chainIndex,
+          chainName: chain.name || `Chain ${chainIndex + 1}`,
+          chainColor: getChainColor(chainIndex),
         }
       });
       

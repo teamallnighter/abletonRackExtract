@@ -18,44 +18,49 @@ const MacroNode = memo(({ data, selected }: NodeProps & { data: MacroNodeData })
   
   return (
     <div 
-      className={`px-3 py-2 shadow-sm rounded-md bg-gradient-to-r from-orange-50 to-red-50 border-2 transition-all duration-200 cursor-pointer
+      className={`px-3 py-2 shadow-sm rounded-md bg-white border-2 transition-all duration-200 cursor-pointer
         touch-manipulation select-none active:scale-95 ${
-        selected ? 'border-orange-500' : 'border-orange-200'
+        selected ? 'border-purple-500 ring-2 ring-purple-200' : 'border-purple-300'
       } ${isHovered ? 'shadow-lg scale-105' : ''}`}
-      style={{ minHeight: '48px' }}
+      style={{ 
+        width: '80px', 
+        height: '80px',
+        minHeight: '80px',
+        minWidth: '80px'
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onTouchStart={() => setIsHovered(true)}
       onTouchEnd={() => setIsHovered(false)}
     >
-      <div className="flex items-center justify-between mb-2">
-        <div className="text-sm sm:text-xs font-medium text-gray-900">
+      <div className="flex flex-col items-center justify-center h-full">
+        <div className="text-xs font-medium text-text-primary text-center truncate w-full mb-1">
           {data.label}
         </div>
-        <div className={`text-sm sm:text-xs font-mono ${isActive ? 'text-orange-600 font-bold' : 'text-gray-600'}`}>
-          {percentage}%
-        </div>
-      </div>
-      
-      <div className="w-full bg-gray-200 rounded-full h-2 sm:h-1.5 mb-2">
-        <div 
-          className={`h-1.5 rounded-full transition-all duration-300 ${
-            isActive ? 'bg-gradient-to-r from-orange-400 to-red-500' : 'bg-gray-300'
-          }`}
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
-      
-      <div className="flex items-center justify-center">
-        <div className="w-6 h-6 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center">
+        
+        <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center mb-1">
           <span className="text-white text-xs font-bold">M{macro.index + 1}</span>
+        </div>
+        
+        <div className="w-full bg-gray-200 rounded-full h-1.5 mb-1">
+          <div 
+            className={`h-1.5 rounded-full transition-all duration-300 ${
+              isActive ? 'bg-gradient-to-r from-purple-400 to-purple-600' : 'bg-gray-300'
+            }`}
+            style={{ width: `${percentage}%` }}
+          />
+        </div>
+        
+        <div className={`text-xs font-mono ${isActive ? 'text-purple-600 font-bold' : 'text-text-tertiary'}`}>
+          {percentage}%
         </div>
       </div>
       
       <Handle
         type="source"
         position={Position.Right}
-        className="w-2 h-2 !bg-orange-500"
+        className="w-2 h-2"
+        style={{ backgroundColor: '#8b5cf6' }}
       />
     </div>
   );

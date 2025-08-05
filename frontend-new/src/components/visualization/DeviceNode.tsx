@@ -9,6 +9,10 @@ interface DeviceNodeData {
   label: string;
   type: 'device';
   data: Device;
+  chainId?: string;
+  chainIndex?: number;
+  chainName?: string;
+  chainColor?: string;
 }
 
 const DeviceNodeComponent = ({ data, selected }: NodeProps & { data: DeviceNodeData }) => {
@@ -31,14 +35,37 @@ const DeviceNodeComponent = ({ data, selected }: NodeProps & { data: DeviceNodeD
     setIsHovered(false);
   }, []);
 
+  const getBorderStyle = () => {
+    if (selected) {
+      return 'border-blue-500 shadow-md ring-2 ring-blue-200';
+    }
+    if (data.chainColor && data.chainIndex !== undefined) {
+      return `border-2 shadow-md`;
+    }
+    return 'border-gray-200';
+  };
+
+  const getChainHighlightStyle = () => {
+    if (data.chainColor && data.chainIndex !== undefined) {
+      return {
+        borderColor: data.chainColor,
+        boxShadow: `0 0 0 1px ${data.chainColor}40`, // 40 for 25% opacity
+      };
+    }
+    return {};
+  };
+
   return (
     <>
       <div 
         className={`px-3 py-2 shadow-sm rounded-md bg-white border-2 transition-all duration-200 cursor-pointer
-          touch-manipulation select-none active:scale-95 ${
-          selected ? 'border-blue-500 shadow-md' : 'border-gray-200'
-        } ${!device.is_on ? 'opacity-60' : ''} ${isHovered ? 'shadow-lg scale-105' : ''}`}
-        style={{ minHeight: '44px' }}
+          touch-manipulation select-none active:scale-95 ${getBorderStyle()} ${
+          !device.is_on ? 'opacity-60' : ''
+        } ${isHovered ? 'shadow-lg scale-105' : ''}`}
+        style={{ 
+          minHeight: '44px',
+          ...getChainHighlightStyle()
+        }}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onTouchStart={() => setIsHovered(true)}
@@ -71,6 +98,13 @@ const DeviceNodeComponent = ({ data, selected }: NodeProps & { data: DeviceNodeD
         </div>
         
         <div className="flex items-center space-x-1">
+          {data.chainColor && (
+            <div 
+              className="w-2 h-2 rounded-full border border-gray-300" 
+              style={{ backgroundColor: data.chainColor }}
+              title={`Chain: ${data.chainName || `Chain ${(data.chainIndex || 0) + 1}`}`}
+            />
+          )}
           {hasNestedChains && (
             <div className="w-2 h-2 bg-purple-400 rounded-full" title="Contains nested chains" />
           )}
@@ -148,6 +182,8 @@ const arePropsEqual = (prevProps: NodeProps & { data: DeviceNodeData }, nextProp
     prevProps.data.label === nextProps.data.label &&
     prevProps.data.data.is_on === nextProps.data.data.is_on &&
     prevProps.data.data.preset_name === nextProps.data.data.preset_name &&
+    prevProps.data.chainColor === nextProps.data.chainColor &&
+    prevProps.data.chainIndex === nextProps.data.chainIndex &&
     JSON.stringify(prevProps.data.data.chains) === JSON.stringify(nextProps.data.data.chains)
   );
 };

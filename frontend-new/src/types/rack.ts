@@ -71,6 +71,11 @@ export interface NodeData extends Record<string, unknown> {
   type: 'chain' | 'device' | 'macro';
   data: Chain | Device | MacroControl;
   isSelected?: boolean;
+  // Chain highlighting properties
+  chainId?: string;
+  chainIndex?: number; 
+  chainName?: string;
+  chainColor?: string;
 }
 
 export interface RackFlowNode {
