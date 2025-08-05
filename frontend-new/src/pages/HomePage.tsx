@@ -1,56 +1,11 @@
-import { useRef, useState } from 'react';
-import { useAnalyzeRackMutation, useRecentRacksQuery } from '../hooks/useRackQuery';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useRecentRacksQuery } from '../hooks/useRackQuery';
 import FavoriteButton from '../components/common/FavoriteButton';
 
 const HomePage = () => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [dragActive, setDragActive] = useState(false);
-  const [description, setDescription] = useState('');
-  const [producerName, setProducerName] = useState('');
-  
   const { isAuthenticated } = useAuth();
-  const analyzeRackMutation = useAnalyzeRackMutation();
   const { data: recentRacks, isLoading: loadingRacks } = useRecentRacksQuery(8);
-  const navigate = useNavigate();
-
-  const handleFileSelect = (file: File) => {
-    if (file && (file.name.endsWith('.adg') || file.name.endsWith('.adv'))) {
-      analyzeRackMutation.mutate({ file, description, producerName });
-    }
-  };
-
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileSelect(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      handleFileSelect(e.target.files[0]);
-    }
-  };
-
-  // Navigate to rack visualization when analysis completes
-  if (analyzeRackMutation.isSuccess && analyzeRackMutation.data) {
-    navigate(`/rack/${analyzeRackMutation.data.rack_id}`);
-  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-12">
@@ -65,71 +20,76 @@ const HomePage = () => {
         </p>
       </div>
 
-      {/* Upload Section */}
-      <div className="bg-white rounded-xl shadow-sm border-2 border-dashed border-gray-300 p-4 sm:p-8">
-        <div
-          className={`relative transition-all duration-200 ${dragActive ? 'border-blue-400 bg-blue-50' : ''}`}
-          onDragEnter={handleDrag}
-          onDragLeave={handleDrag}
-          onDragOver={handleDrag}
-          onDrop={handleDrop}
-        >
-          <div className="text-center space-y-6">
-            <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mx-auto">
-              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+      {/* Navigation Section */}
+      <div className="bg-white rounded-xl shadow-sm border p-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <Link 
+            to="/" 
+            className="group flex flex-col items-center p-6 bg-gray-50 rounded-lg hover:bg-blue-50 hover:shadow-md transition-all duration-200"
+          >
+            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-3 group-hover:bg-blue-200 transition-colors">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
             </div>
-            
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                Drop your rack file here
-              </h3>
-              <p className="text-gray-500">
-                or click to browse for .adg or .adv files
-              </p>
-            </div>
+            <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">Browse</h3>
+            <p className="text-sm text-gray-500 text-center mt-1">Explore recent racks</p>
+          </Link>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-md mx-auto">
-              <input
-                type="text"
-                placeholder="Producer name (optional)"
-                value={producerName}
-                onChange={(e) => setProducerName(e.target.value)}
-                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 min-h-[44px] touch-manipulation"
-              />
-              <input
-                type="text"
-                placeholder="Description (optional)"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 min-h-[44px] touch-manipulation"
-              />
+          <Link 
+            to="/search" 
+            className="group flex flex-col items-center p-6 bg-gray-50 rounded-lg hover:bg-blue-50 hover:shadow-md transition-all duration-200"
+          >
+            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-3 group-hover:bg-blue-200 transition-colors">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </div>
+            <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">Search</h3>
+            <p className="text-sm text-gray-500 text-center mt-1">Find specific racks</p>
+          </Link>
 
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={analyzeRackMutation.isPending}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-95 touch-manipulation min-h-[48px]"
+          {isAuthenticated ? (
+            <Link 
+              to="/upload" 
+              className="group flex flex-col items-center p-6 bg-gray-50 rounded-lg hover:bg-blue-50 hover:shadow-md transition-all duration-200"
             >
-              {analyzeRackMutation.isPending ? 'Analyzing...' : 'Choose File'}
-            </button>
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-3 group-hover:bg-blue-200 transition-colors">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+              </div>
+              <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">Upload</h3>
+              <p className="text-sm text-gray-500 text-center mt-1">Share your racks</p>
+            </Link>
+          ) : (
+            <Link 
+              to="/login" 
+              className="group flex flex-col items-center p-6 bg-gray-50 rounded-lg hover:bg-blue-50 hover:shadow-md transition-all duration-200"
+            >
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-3 group-hover:bg-blue-200 transition-colors">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+              </div>
+              <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">Upload</h3>
+              <p className="text-sm text-gray-500 text-center mt-1">Share your racks</p>
+            </Link>
+          )}
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".adg,.adv"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-          </div>
+          <Link 
+            to={isAuthenticated ? "/profile" : "/login"} 
+            className="group flex flex-col items-center p-6 bg-gray-50 rounded-lg hover:bg-blue-50 hover:shadow-md transition-all duration-200"
+          >
+            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-3 group-hover:bg-blue-200 transition-colors">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+            <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">{isAuthenticated ? "Profile" : "Login"}</h3>
+            <p className="text-sm text-gray-500 text-center mt-1">{isAuthenticated ? "Your account" : "Sign in or register"}</p>
+          </Link>
         </div>
-
-        {analyzeRackMutation.error && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-600">{analyzeRackMutation.error.message}</p>
-          </div>
-        )}
       </div>
 
       {/* Recent Racks Section */}
