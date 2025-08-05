@@ -164,7 +164,7 @@ const EnhancedUpload: React.FC = () => {
                   </h2>
                   <button
                     onClick={prevStep}
-                    className="text-gray-600 hover:text-gray-800 text-sm transition-colors"
+                    className="text-gray-600 hover:text-gray-800 text-sm transition-colors bg-transparent border-none font-medium"
                   >
                     ← Back
                   </button>
@@ -270,7 +270,7 @@ const EnhancedUpload: React.FC = () => {
                     </h2>
                     <button
                       onClick={prevStep}
-                      className="text-gray-600 hover:text-gray-800 text-sm transition-colors"
+                      className="text-gray-600 hover:text-gray-800 text-sm transition-colors bg-transparent border-none font-medium"
                     >
                       ← Back
                     </button>
@@ -322,7 +322,7 @@ const EnhancedUpload: React.FC = () => {
                   </h2>
                   <button
                     onClick={prevStep}
-                    className="text-gray-600 hover:text-gray-800 text-sm transition-colors"
+                    className="text-gray-600 hover:text-gray-800 text-sm transition-colors bg-transparent border-none font-medium"
                   >
                     ← Back
                   </button>

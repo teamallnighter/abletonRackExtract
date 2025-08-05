@@ -97,7 +97,7 @@ const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
             onChange={(e) => handleInputChange('title', e.target.value)}
             disabled={disabled}
             required
-            className="w-full px-3 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-blue-700 disabled:bg-gray-100 disabled:text-gray-500 text-gray-900 transition-colors"
+            className="w-full px-3 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-blue-700 disabled:bg-gray-100 disabled:text-gray-500 text-gray-900 bg-white transition-colors"
             placeholder="Give your rack a memorable name"
           />
         </div>
@@ -112,7 +112,7 @@ const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
             value={metadata.description || ''}
             onChange={(e) => handleInputChange('description', e.target.value)}
             disabled={disabled}
-            className="w-full px-3 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-blue-700 disabled:bg-gray-100 disabled:text-gray-500 text-gray-900 transition-colors"
+            className="w-full px-3 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-blue-700 disabled:bg-gray-100 disabled:text-gray-500 text-gray-900 bg-white transition-colors"
             placeholder="Describe your rack - what does it do? What style is it? How should it be used? Any special techniques or tips?"
           />
         </div>
@@ -165,7 +165,7 @@ const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
               <button
                 type="button"
                 onClick={onApplySuggestedTags}
-                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium bg-transparent border-none"
               >
                 Add all
               </button>
@@ -177,10 +177,10 @@ const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
                   type="button"
                   onClick={() => handleAddSuggestedTag(tag)}
                   disabled={disabled || metadata.tags?.includes(tag)}
-                  className={`px-3 py-1 rounded-full text-sm border transition-colors ${
+                  className={`px-3 py-1 rounded-full text-sm border transition-colors font-medium ${
                     metadata.tags?.includes(tag)
                       ? 'bg-blue-100 text-blue-800 border-blue-200 cursor-not-allowed'
-                      : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+                      : 'bg-white text-gray-900 border-gray-400 hover:bg-gray-50 shadow-sm'
                   }`}
                 >
                   {tag}
@@ -271,7 +271,7 @@ const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
                 handleInputChange('copyright', e.target.value);
               }}
               disabled={disabled}
-              className="w-full px-3 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-blue-700 disabled:bg-gray-100 disabled:text-gray-500 text-gray-900 transition-colors"
+              className="w-full px-3 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-blue-700 disabled:bg-gray-100 disabled:text-gray-500 text-gray-900 bg-white transition-colors"
               placeholder="Enter custom license/copyright information"
             />
           ) : null}
