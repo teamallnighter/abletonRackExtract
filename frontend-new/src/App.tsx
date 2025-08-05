@@ -8,7 +8,6 @@ import RackVisualizationPage from './pages/RackVisualizationPage';
 import SearchPage from './pages/SearchPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Upload from './pages/Upload';
 import EnhancedUpload from './pages/EnhancedUpload';
 import Profile from './pages/Profile';
 import Navbar from './components/layout/Navbar';
@@ -49,14 +48,6 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <EnhancedUpload />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/upload/legacy" 
-                      element={
-                        <ProtectedRoute>
-                          <Upload />
                         </ProtectedRoute>
                       } 
                     />

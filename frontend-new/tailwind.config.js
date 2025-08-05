@@ -14,16 +14,13 @@ export default {
           700: '#1d4ed8',
           800: '#1e3a8a',
         },
-        text: {
-          primary: '#111827',    // Gray 900 - 12:1 contrast
-          secondary: '#374151',  // Gray 700 - 4.5:1 contrast  
-          tertiary: '#6b7280',   // Gray 500 - 4.5:1 contrast
-          disabled: '#9ca3af',   // Gray 400 - accessible disabled state
+        gray: {
+          700: '#374151',  // Our accessible gray
+          800: '#1f2937',  // Darker gray
+          900: '#111827',  // Near black
         },
-        border: {
-          primary: '#374151',    // Gray 700 for better visibility
-          secondary: '#6b7280',  // Gray 500 for subtle borders
-          focus: '#1d4ed8',      // Blue 700 for focus states
+        blue: {
+          700: '#1d4ed8',  // Our focus blue
         }
       }
     },

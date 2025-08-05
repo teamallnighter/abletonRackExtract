@@ -86,7 +86,7 @@ const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
       {/* Title and Description */}
       <div className="space-y-4">
         <div>
-          <label htmlFor="title" className="block text-sm font-medium text-text-secondary mb-2">
+          <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
             Title *
           </label>
           <input
@@ -96,13 +96,13 @@ const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
             onChange={(e) => handleInputChange('title', e.target.value)}
             disabled={disabled}
             required
-            className="w-full px-3 py-2 border border-border-primary rounded-md shadow-sm placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-border-focus focus:border-border-focus disabled:bg-gray-100 disabled:text-text-disabled text-text-primary transition-colors"
+            className="w-full px-3 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-blue-700 disabled:bg-gray-100 disabled:text-gray-500 text-gray-900 transition-colors"
             placeholder="Give your rack a memorable name"
           />
         </div>
 
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-text-secondary mb-2">
+          <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
             Description
           </label>
           <textarea
@@ -111,7 +111,7 @@ const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
             value={metadata.description || ''}
             onChange={(e) => handleInputChange('description', e.target.value)}
             disabled={disabled}
-            className="w-full px-3 py-2 border border-border-primary rounded-md shadow-sm placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-border-focus focus:border-border-focus disabled:bg-gray-100 disabled:text-text-disabled text-text-primary transition-colors"
+            className="w-full px-3 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-blue-700 disabled:bg-gray-100 disabled:text-gray-500 text-gray-900 transition-colors"
             placeholder="Describe your rack - what does it do? What style is it? How should it be used? Any special techniques or tips?"
           />
         </div>
@@ -120,7 +120,7 @@ const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
 
       {/* Difficulty Level */}
       <div>
-        <h3 className="text-lg font-medium text-text-primary mb-4 flex items-center">
+        <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
           Difficulty Level
           <span className={`ml-3 px-2 py-1 rounded-full text-xs font-medium ${getComplexityColor(complexityScore)}`}>
             Complexity: {getComplexityLabel(complexityScore)} ({complexityScore}/100)
@@ -145,8 +145,8 @@ const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
                 disabled={disabled}
                 className="sr-only"
               />
-              <div className="font-medium text-text-primary">{label}</div>
-              <div className="text-sm text-text-secondary mt-1">{description}</div>
+              <div className="font-medium text-gray-900">{label}</div>
+              <div className="text-sm text-gray-700 mt-1">{description}</div>
             </label>
           ))}
         </div>
@@ -154,13 +154,13 @@ const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
 
       {/* Tags */}
       <div>
-        <h3 className="text-lg font-medium text-text-primary mb-4">Tags</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Tags</h3>
         
         {/* Auto-suggested tags */}
         {autoTags.length > 0 && (
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-text-secondary">Suggested tags from your rack:</p>
+              <p className="text-sm font-medium text-gray-700">Suggested tags from your rack:</p>
               <button
                 type="button"
                 onClick={onApplySuggestedTags}
@@ -239,7 +239,7 @@ const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
 
       {/* Copyright */}
       <div>
-        <h3 className="text-lg font-medium text-text-primary mb-4">License & Copyright</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">License & Copyright</h3>
         <div className="space-y-3">
           <select
             value={metadata.copyright === customCopyright && customCopyright ? 'Custom' : metadata.copyright || ''}
@@ -252,7 +252,7 @@ const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
               }
             }}
             disabled={disabled}
-            className="w-full px-3 py-2 border border-border-primary rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-border-focus focus:border-border-focus disabled:bg-gray-100 disabled:text-text-disabled text-text-primary transition-colors"
+            className="w-full px-3 py-2 border border-border-primary rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-border-focus focus:border-border-focus disabled:bg-gray-100 disabled:text-text-disabled text-gray-900 transition-colors"
           >
             <option value="">Select License</option>
             {COPYRIGHT_OPTIONS.map(option => (
@@ -269,7 +269,7 @@ const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
                 handleInputChange('copyright', e.target.value);
               }}
               disabled={disabled}
-              className="w-full px-3 py-2 border border-border-primary rounded-md shadow-sm placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-border-focus focus:border-border-focus disabled:bg-gray-100 disabled:text-text-disabled text-text-primary transition-colors"
+              className="w-full px-3 py-2 border border-gray-700 rounded-md shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:border-blue-700 disabled:bg-gray-100 disabled:text-gray-500 text-gray-900 transition-colors"
               placeholder="Enter custom license/copyright information"
             />
           ) : null}

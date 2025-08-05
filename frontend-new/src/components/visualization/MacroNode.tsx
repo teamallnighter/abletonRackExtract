@@ -34,7 +34,7 @@ const MacroNode = memo(({ data, selected }: NodeProps & { data: MacroNodeData })
       onTouchEnd={() => setIsHovered(false)}
     >
       <div className="flex flex-col items-center justify-center h-full">
-        <div className="text-xs font-medium text-text-primary text-center truncate w-full mb-1">
+        <div className="text-xs font-medium text-gray-900 text-center truncate w-full mb-1">
           {data.label}
         </div>
         
@@ -51,7 +51,7 @@ const MacroNode = memo(({ data, selected }: NodeProps & { data: MacroNodeData })
           />
         </div>
         
-        <div className={`text-xs font-mono ${isActive ? 'text-purple-600 font-bold' : 'text-text-tertiary'}`}>
+        <div className={`text-xs font-mono ${isActive ? 'text-purple-600 font-bold' : 'text-gray-500'}`}>
           {percentage}%
         </div>
       </div>
