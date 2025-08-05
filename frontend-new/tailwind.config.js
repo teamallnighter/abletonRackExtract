@@ -15,6 +15,8 @@ export default {
           800: '#1e3a8a',
         },
         gray: {
+          100: '#f3f4f6',  // Light gray
+          200: '#e5e7eb',  // Light gray hover
           700: '#374151',  // Our accessible gray
           800: '#1f2937',  // Darker gray
           900: '#111827',  // Near black

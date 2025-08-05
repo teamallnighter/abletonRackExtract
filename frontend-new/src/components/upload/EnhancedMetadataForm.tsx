@@ -131,11 +131,10 @@ const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
           {DIFFICULTIES.map(({ value, label, description }) => (
             <label
               key={value}
-              className={`relative p-4 border rounded-lg cursor-pointer transition-all ${
-                metadata.difficulty === value
+              className={`relative p-4 border rounded-lg cursor-pointer transition-all ${metadata.difficulty === value
                   ? 'border-blue-500 bg-blue-50'
                   : 'border-gray-300 hover:border-gray-400'
-              } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <input
                 type="radio"
@@ -156,7 +155,7 @@ const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
       {/* Tags */}
       <div>
         <h3 className="text-lg font-medium text-gray-900 mb-4">Tags</h3>
-        
+
         {/* Auto-suggested tags */}
         {autoTags.length > 0 && (
           <div className="mb-4">
@@ -165,7 +164,7 @@ const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
               <button
                 type="button"
                 onClick={onApplySuggestedTags}
-                className="text-sm text-blue-600 hover:text-blue-800 font-medium bg-transparent border-none"
+                className="text-sm"
               >
                 Add all
               </button>
@@ -177,11 +176,10 @@ const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
                   type="button"
                   onClick={() => handleAddSuggestedTag(tag)}
                   disabled={disabled || metadata.tags?.includes(tag)}
-                  className={`px-3 py-1 rounded-full text-sm border transition-colors font-medium ${
-                    metadata.tags?.includes(tag)
+                  className={`px-3 py-1 rounded-full text-sm border transition-colors font-medium ${metadata.tags?.includes(tag)
                       ? 'bg-blue-100 text-blue-800 border-blue-200 cursor-not-allowed'
                       : 'bg-white text-gray-900 border-gray-400 hover:bg-gray-50 shadow-sm'
-                  }`}
+                    }`}
                 >
                   {tag}
                   {metadata.tags?.includes(tag) && ' ✓'}

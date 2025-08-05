@@ -36,6 +36,7 @@ h1 {
   line-height: 1.1;
 }
 
+/* Commented out to allow Tailwind button styles to work
 button {
   border-radius: 8px;
   border: 1px solid transparent;
@@ -54,6 +55,7 @@ button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
+*/
 
 /* Mobile-specific styles */
 @media (max-width: 768px) {
@@ -90,7 +92,7 @@ button:focus-visible {
   a:hover {
     color: #747bff;
   }
-  button {
+  /* button {
     background-color: #f9f9f9;
-  }
+  } */
 }
