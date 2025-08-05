@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { EnhancedUploadMetadata } from '../../hooks/useEnhancedUpload';
+import Select from '../common/Select';
 
 interface EnhancedMetadataFormProps {
   metadata: EnhancedUploadMetadata;
@@ -206,7 +207,7 @@ const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
               type="button"
               onClick={handleAddTag}
               disabled={disabled || !tagInput.trim()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-sm border border-blue-600"
             >
               Add
             </button>
@@ -241,7 +242,7 @@ const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
       <div>
         <h3 className="text-lg font-medium text-gray-900 mb-4">License & Copyright</h3>
         <div className="space-y-3">
-          <select
+          <Select
             value={metadata.copyright === customCopyright && customCopyright ? 'Custom' : metadata.copyright || ''}
             onChange={(e) => {
               if (e.target.value === 'Custom') {
@@ -252,13 +253,14 @@ const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
               }
             }}
             disabled={disabled}
-            className="w-full px-3 py-2 border border-border-primary rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-border-focus focus:border-border-focus disabled:bg-gray-100 disabled:text-text-disabled text-gray-900 transition-colors"
-          >
-            <option value="">Select License</option>
-            {COPYRIGHT_OPTIONS.map(option => (
-              <option key={option} value={option}>{option}</option>
-            ))}
-          </select>
+            placeholder="Select License"
+            options={COPYRIGHT_OPTIONS.map(option => ({
+              value: option,
+              label: option
+            }))}
+            fullWidth
+            size="md"
+          />
 
           {(metadata.copyright === customCopyright && customCopyright) || metadata.copyright === 'Custom' ? (
             <input

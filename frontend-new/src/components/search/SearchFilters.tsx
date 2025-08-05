@@ -1,4 +1,5 @@
 import React from 'react';
+import Select from '../common/Select';
 
 export interface SearchFilters {
   genre?: string;
@@ -66,37 +67,36 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
 
       {/* Sort */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Sort By
-        </label>
-        <select
+        <Select
+          label="Sort By"
           value={filters.sortBy}
           onChange={(e) => onFiltersChange({ sortBy: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        >
-          {SORT_OPTIONS.map(option => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+          options={SORT_OPTIONS.map(option => ({
+            value: option.value,
+            label: option.label
+          }))}
+          fullWidth
+          size="md"
+        />
       </div>
 
       {/* Genre */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Genre
-        </label>
-        <select
+        <Select
+          label="Genre"
           value={filters.genre || ''}
           onChange={(e) => onFiltersChange({ genre: e.target.value || undefined })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="">All Genres</option>
-          {COMMON_GENRES.map(genre => (
-            <option key={genre} value={genre}>{genre}</option>
-          ))}
-        </select>
+          placeholder="All Genres"
+          options={[
+            { value: '', label: 'All Genres' },
+            ...COMMON_GENRES.map(genre => ({
+              value: genre,
+              label: genre
+            }))
+          ]}
+          fullWidth
+          size="md"
+        />
       </div>
 
       {/* Device Count Range */}
