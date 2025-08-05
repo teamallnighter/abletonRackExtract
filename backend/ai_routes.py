@@ -105,6 +105,15 @@ def ai_status():
 def analyze_rack(rack_id):
     """Analyze a single rack"""
     try:
+        from bson import ObjectId
+        
+        # Validate rack_id parameter
+        if not rack_id or rack_id in ['undefined', 'null', 'None']:
+            return jsonify({'error': 'Invalid rack ID provided'}), 400
+            
+        if not ObjectId.is_valid(rack_id):
+            return jsonify({'error': 'Invalid rack ID format'}), 400
+        
         analyzer, error = get_ai_analyzer()
         if error:
             return jsonify({'error': error}), 500
@@ -144,16 +153,28 @@ def compare_racks():
 @jwt_required()
 def suggest_improvements(rack_id):
     """Suggest improvements for a rack"""
-    analyzer, error = get_ai_analyzer()
-    if error:
-        return jsonify({'error': error}), 500
-    
-    result = analyzer.suggest_improvements(rack_id)
-    
-    if 'error' in result:
-        return jsonify(result), 404 if 'not found' in result['error'] else 500
-    
-    return jsonify(result)
+    try:
+        from bson import ObjectId
+        
+        # Validate rack_id parameter
+        if not rack_id or rack_id in ['undefined', 'null', 'None']:
+            return jsonify({'error': 'Invalid rack ID provided'}), 400
+            
+        if not ObjectId.is_valid(rack_id):
+            return jsonify({'error': 'Invalid rack ID format'}), 400
+        
+        analyzer, error = get_ai_analyzer()
+        if error:
+            return jsonify({'error': error}), 500
+        
+        result = analyzer.suggest_improvements(rack_id)
+        
+        if 'error' in result:
+            return jsonify(result), 404 if 'not found' in result['error'] else 500
+        
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': f'Failed to get suggestions: {str(e)}'}), 500
 
 @ai_bp.route('/ai/ask', methods=['POST'])
 @jwt_required()
@@ -181,16 +202,28 @@ def ask_question():
 @jwt_required()
 def generate_ideas(rack_id):
     """Generate ideas for similar racks"""
-    analyzer, error = get_ai_analyzer()
-    if error:
-        return jsonify({'error': error}), 500
-    
-    result = analyzer.generate_similar_rack_idea(rack_id)
-    
-    if 'error' in result:
-        return jsonify(result), 404 if 'not found' in result['error'] else 500
-    
-    return jsonify(result)
+    try:
+        from bson import ObjectId
+        
+        # Validate rack_id parameter
+        if not rack_id or rack_id in ['undefined', 'null', 'None']:
+            return jsonify({'error': 'Invalid rack ID provided'}), 400
+            
+        if not ObjectId.is_valid(rack_id):
+            return jsonify({'error': 'Invalid rack ID format'}), 400
+        
+        analyzer, error = get_ai_analyzer()
+        if error:
+            return jsonify({'error': error}), 500
+        
+        result = analyzer.generate_similar_rack_idea(rack_id)
+        
+        if 'error' in result:
+            return jsonify(result), 404 if 'not found' in result['error'] else 500
+        
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': f'Failed to generate ideas: {str(e)}'}), 500
 
 @ai_bp.route('/ai/chat', methods=['POST'])
 @jwt_required()

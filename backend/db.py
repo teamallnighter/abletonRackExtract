@@ -237,10 +237,25 @@ class MongoDB:
         
         try:
             from bson import ObjectId
+            from bson.errors import InvalidId
+            
+            # Validate rack_id before creating ObjectId
+            if not rack_id or rack_id == 'undefined' or rack_id == 'null':
+                logger.error(f"Invalid rack_id provided: {rack_id}")
+                return None
+            
+            # Ensure rack_id is a valid ObjectId string
+            if not ObjectId.is_valid(rack_id):
+                logger.error(f"Invalid ObjectId format: {rack_id}")
+                return None
+                
             document = self.collection.find_one({'_id': ObjectId(rack_id)})
             if document:
                 document['_id'] = str(document['_id'])
             return document
+        except (InvalidId, ValueError) as e:
+            logger.error(f"ObjectId validation error for rack_id '{rack_id}': {e}")
+            return None
         except Exception as e:
             logger.error(f"Failed to get rack analysis: {e}")
             return None

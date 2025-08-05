@@ -450,6 +450,15 @@ def get_recent_racks():
 def get_rack_by_id(rack_id):
     """Get a specific rack analysis by ID"""
     try:
+        from bson import ObjectId
+        
+        # Validate rack_id parameter
+        if not rack_id or rack_id in ['undefined', 'null', 'None']:
+            return jsonify({'error': 'Invalid rack ID provided'}), 400
+            
+        if not ObjectId.is_valid(rack_id):
+            return jsonify({'error': 'Invalid rack ID format'}), 400
+        
         rack = db.get_rack_analysis(rack_id)
         if rack:
             return jsonify({
@@ -459,6 +468,7 @@ def get_rack_by_id(rack_id):
         else:
             return jsonify({'error': 'Rack not found'}), 404
     except Exception as e:
+        logger.error(f"Error in get_rack_by_id for rack_id '{rack_id}': {str(e)}")
         return jsonify({'error': f'Failed to get rack: {str(e)}'}), 500
 
 @app.route('/api/racks/search', methods=['GET', 'POST'])
@@ -548,6 +558,15 @@ def search_by_tags():
 def download_rack_file(rack_id):
     """Download the original .adg file for a rack"""
     try:
+        from bson import ObjectId
+        
+        # Validate rack_id parameter
+        if not rack_id or rack_id in ['undefined', 'null', 'None']:
+            return jsonify({'error': 'Invalid rack ID provided'}), 400
+            
+        if not ObjectId.is_valid(rack_id):
+            return jsonify({'error': 'Invalid rack ID format'}), 400
+        
         # Increment download count
         db.increment_download_count(rack_id)
         
