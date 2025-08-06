@@ -582,8 +582,7 @@ def enhanced_analyze_upload():
         return jsonify({'error': f'Upload analysis failed: {str(e)}'}), 500
 
 @enhanced_bp.route('/upload/complete', methods=['POST'])
-@token_required
-def complete_enhanced_upload(current_user):
+def complete_enhanced_upload():
     """Complete the enhanced upload with full metadata"""
     try:
         from security import validate_metadata, sanitize_input
@@ -616,12 +615,12 @@ def complete_enhanced_upload(current_user):
         # Decode file content
         file_content = base64.b64decode(file_content_b64) if file_content_b64 else b''
         
-        # Save with enhanced metadata
+        # Save with enhanced metadata (no user auth for now)
         rack_id = db.save_rack_analysis(
             rack_info, 
             filename, 
             file_content, 
-            user_id=current_user['_id'],
+            user_id=None,
             enhanced_metadata=enhanced_metadata
         )
         
