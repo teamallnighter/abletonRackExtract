@@ -1,0 +1,29 @@
+# Alternative Nixpacks configuration using absolute paths
+# Use this if the sh -c approach still fails
+
+[variables]
+PYTHONPATH = "/app/backend"
+PYTHONUNBUFFERED = "1"
+
+[phases.setup]
+nixPkgs = ["python3", "pip"]
+
+[phases.install]
+cmds = [
+    "pip install -r backend/requirements.txt"
+]
+
+[phases.build]
+cmds = [
+    "echo 'Build phase completed'"
+]
+
+[start]
+# Option 1: Use absolute path with WORKDIR-like behavior
+cmd = "python /app/backend/server.py"
+
+# Option 2: Alternative shell approach
+# cmd = "bash -c 'cd /app/backend && python server.py'"
+
+# Option 3: Use the start.sh script
+# cmd = "./start.sh"

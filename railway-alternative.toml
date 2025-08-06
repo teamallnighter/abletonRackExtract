@@ -1,0 +1,17 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+# Option 1: Use the root-level launcher script
+startCommand = "python launch.py"
+
+# Option 2: Alternative shell approach (uncomment to use)
+# startCommand = "bash -c 'cd backend && python server.py'"
+
+# Option 3: Use start.sh script (uncomment to use)  
+# startCommand = "./start.sh"
+
+healthcheckPath = "/api/health"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3

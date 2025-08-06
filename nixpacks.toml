@@ -18,4 +18,5 @@ cmds = [
 ]
 
 [start]
-cmd = "cd backend && python server.py"
+# Use shell command to properly change directory
+cmd = "sh -c 'cd backend && python server.py'"
