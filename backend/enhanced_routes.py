@@ -615,25 +615,43 @@ def complete_enhanced_upload():
         # Decode file content
         file_content = base64.b64decode(file_content_b64) if file_content_b64 else b''
         
-        # Save with enhanced metadata (no user auth for now)
+        # Try to get user from token, but allow anonymous uploads
+        current_user = None
+        token = None
+        
+        # Get token from header if provided
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            try:
+                token = auth_header.split(' ')[1]  # Bearer token
+                from flask import current_app
+                import jwt
+                data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+                current_user = db.get_user_by_id(data['user_id'])
+            except:
+                # Invalid token, continue as anonymous
+                pass
+        
+        # Save with enhanced metadata
         rack_id = db.save_rack_analysis(
             rack_info, 
             filename, 
             file_content, 
-            user_id=None,
+            user_id=current_user['_id'] if current_user else None,
             enhanced_metadata=enhanced_metadata
         )
         
         if not rack_id:
             return jsonify({'error': 'Failed to save analysis'}), 500
         
-        # Save annotations if provided (skip for now without user auth)
+        # Save annotations if provided (only if user is authenticated)
         annotation_ids = []
-        # for annotation in annotations:
-        #     if annotation.get('content', '').strip():
-        #         annotation_id = db.create_annotation(rack_id, None, annotation)
-        #         if annotation_id:
-        #             annotation_ids.append(annotation_id)
+        if current_user:
+            for annotation in annotations:
+                if annotation.get('content', '').strip():
+                    annotation_id = db.create_annotation(rack_id, current_user['_id'], annotation)
+                    if annotation_id:
+                        annotation_ids.append(annotation_id)
         
         # Clean up temp directory
         from flask import current_app
