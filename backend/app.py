@@ -735,6 +735,24 @@ def get_user_racks(current_user):
         logger.error(f"Failed to get user racks: {e}")
         return jsonify({'error': 'Failed to get user racks'}), 500
 
+@app.route('/api/producer/<producer_name>/racks', methods=['GET'])
+def get_producer_racks(producer_name):
+    """Get all racks by producer name (for attribution and profiles)"""
+    try:
+        limit = request.args.get('limit', 50, type=int)
+        racks = db.get_racks_by_producer(producer_name, limit=limit)
+        
+        return jsonify({
+            'success': True,
+            'racks': racks,
+            'count': len(racks),
+            'producer_name': producer_name
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Failed to get producer racks: {e}")
+        return jsonify({'error': 'Failed to get producer racks'}), 500
+
 if __name__ == '__main__':
     # Create upload folder if it doesn't exist
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)

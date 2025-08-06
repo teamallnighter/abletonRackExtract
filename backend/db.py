@@ -145,6 +145,9 @@ class MongoDB:
                     'parent_rack_id': enhanced_metadata.get('parent_rack_id')
                 }
                 
+                # Preserve producer attribution - critical for user profiles and credit
+                document['producer_name'] = enhanced_metadata.get('producer_name', '')
+                
                 # Enhanced tagging system
                 document['tags'] = {
                     'user_tags': enhanced_metadata.get('tags', []),
@@ -531,6 +534,23 @@ class MongoDB:
             return racks
         except Exception as e:
             logger.error(f"Failed to get user racks: {e}")
+            return []
+    
+    def get_racks_by_producer(self, producer_name, limit=50):
+        """Get racks by producer name (for anonymous uploads and attribution)"""
+        if not self.connected:
+            if not self.connect():
+                return []
+        
+        try:
+            cursor = self.collection.find({'producer_name': producer_name}).sort('created_at', -1).limit(limit)
+            racks = []
+            for doc in cursor:
+                doc['_id'] = str(doc['_id'])
+                racks.append(doc)
+            return racks
+        except Exception as e:
+            logger.error(f"Failed to get producer racks: {e}")
             return []
     
     def update_rack_ownership(self, rack_id, user_id):

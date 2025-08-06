@@ -601,7 +601,7 @@ def complete_enhanced_upload():
             return jsonify({'error': error_msg}), 400
         
         # Sanitize all text inputs
-        for key in ['title', 'description', 'difficulty']:
+        for key in ['title', 'description', 'difficulty', 'producer_name']:
             if key in enhanced_metadata and enhanced_metadata[key]:
                 enhanced_metadata[key] = sanitize_input(enhanced_metadata[key])
         
@@ -631,6 +631,10 @@ def complete_enhanced_upload():
             except:
                 # Invalid token, continue as anonymous
                 pass
+        
+        # If user is authenticated but no producer name provided, use their username
+        if current_user and not enhanced_metadata.get('producer_name'):
+            enhanced_metadata['producer_name'] = current_user.get('username', 'Unknown Producer')
         
         # Save with enhanced metadata
         rack_id = db.save_rack_analysis(
