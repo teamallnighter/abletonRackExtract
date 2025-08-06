@@ -5,7 +5,7 @@ PIP_NO_CACHE_DIR = "1"
 PIP_DISABLE_PIP_VERSION_CHECK = "1"
 
 [phases.setup]
-nixPkgs = ["python3", "python3Packages.pip", "python3Packages.venv"]
+nixPkgs = ["python3", "python3Packages.pip"]
 
 [phases.install]
 cmds = [

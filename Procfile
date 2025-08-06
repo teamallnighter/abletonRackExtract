@@ -1,1 +1,1 @@
-web: cd backend && /opt/venv/bin/python server.py
+web: ./start.sh

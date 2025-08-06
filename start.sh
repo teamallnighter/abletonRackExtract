@@ -8,16 +8,24 @@ echo "📍 Current directory: $(pwd)"
 echo "📁 Listing backend files:"
 ls -la backend/
 
-# Check Python version
+# Check Python version and determine which python to use
 echo "🐍 Python version:"
-/opt/venv/bin/python --version || python3 --version || python --version
+if [ -f "/opt/venv/bin/python" ]; then
+    PYTHON_CMD="/opt/venv/bin/python"
+    echo "Using virtual environment python"
+    $PYTHON_CMD --version
+else
+    PYTHON_CMD="python3"
+    echo "Using system python"
+    $PYTHON_CMD --version
+fi
 
 # Change to backend directory
 cd backend
 
 # Run health check
 echo "🔍 Running health check:"
-/opt/venv/bin/python health_check.py || python3 health_check.py
+$PYTHON_CMD health_check.py
 
 if [ $? -ne 0 ]; then
     echo "❌ Health check failed!"
@@ -25,4 +33,4 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "🎯 Starting production server..."
-exec /opt/venv/bin/python server.py
+exec $PYTHON_CMD server.py

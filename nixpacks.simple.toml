@@ -1,0 +1,15 @@
+# Simplified nixpacks configuration - rename to nixpacks.toml if needed
+[variables]
+PYTHONDONTWRITEBYTECODE = "1"
+PYTHONUNBUFFERED = "1"
+
+[phases.setup]
+nixPkgs = ["python3", "python3Packages.pip"]
+
+[phases.install]
+cmds = [
+  "pip install -r backend/requirements.txt"
+]
+
+[start]
+cmd = "cd backend && python server.py"
