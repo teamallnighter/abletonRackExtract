@@ -12,14 +12,17 @@ ls -la backend/
 echo "🐍 Python version:"
 python3 --version || python --version
 
-# Verify gunicorn installation
-echo "✅ Verifying gunicorn installation:"
+# Change to backend directory
 cd backend
-python3 -c "import gunicorn; print(f'Gunicorn version: {gunicorn.__version__}')" || python -c "import gunicorn; print(f'Gunicorn version: {gunicorn.__version__}')"
 
-# Check if we can import the Flask app
-echo "🌐 Testing Flask app import:"
-python3 -c "from app import app; print('✅ Flask app imported successfully')" || python -c "from app import app; print('✅ Flask app imported successfully')"
+# Run health check
+echo "🔍 Running health check:"
+python3 health_check.py
 
-echo "🎯 Starting gunicorn..."
-exec python3 -m gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120 --preload
+if [ $? -ne 0 ]; then
+    echo "❌ Health check failed!"
+    exit 1
+fi
+
+echo "🎯 Starting production server..."
+exec python3 server.py

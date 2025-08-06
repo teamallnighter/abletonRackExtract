@@ -24,8 +24,7 @@ from security import validate_password, validate_email, sanitize_username
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Add parent directory to path to import the analyzer modules
-sys.path.append(str(Path(__file__).parent.parent.parent))
+# Import the analyzer modules (they're in the same directory)
 from abletonRackAnalyzer import decompress_and_parse_ableton_file, parse_chains_and_devices, export_xml_to_file, export_analysis_to_json
 
 # Import MongoDB helper
@@ -740,5 +739,8 @@ if __name__ == '__main__':
     # Create upload folder if it doesn't exist
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     
+    # Get port from environment variable (Railway sets this)
+    port = int(os.environ.get('PORT', 5001))
+    
     # Run the app
-    app.run(debug=False, port=5001)
+    app.run(debug=False, host='0.0.0.0', port=port)
