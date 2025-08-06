@@ -25,9 +25,26 @@ def try_gunicorn():
         
         port = os.environ.get('PORT', '5001')
         
-        # Try to use virtual environment python first, fallback to system python
-        venv_python = '/opt/venv/bin/python'
-        python_exe = venv_python if os.path.exists(venv_python) else 'python'
+        # Try different python executables in order of preference
+        python_candidates = [
+            '/opt/venv/bin/python',  # Railway virtual environment
+            '/usr/local/bin/python3', # System python3
+            '/usr/bin/python3',      # Alternative system python3
+            'python3',               # PATH python3
+            'python',                # PATH python
+            sys.executable           # Current python interpreter
+        ]
+        
+        python_exe = None
+        for candidate in python_candidates:
+            if candidate == sys.executable or os.path.exists(candidate):
+                python_exe = candidate
+                logger.info(f"Using python: {python_exe}")
+                break
+        
+        if not python_exe:
+            logger.error("No suitable python executable found")
+            return False
         
         cmd = [
             python_exe, '-m', 'gunicorn', 
@@ -36,7 +53,9 @@ def try_gunicorn():
             '--workers', '1',
             '--timeout', '120',
             '--preload',
-            '--log-level', 'info'
+            '--log-level', 'info',
+            '--access-logfile', '-',
+            '--error-logfile', '-'
         ]
         
         logger.info(f"🎯 Starting gunicorn: {' '.join(cmd)}")
