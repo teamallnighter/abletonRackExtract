@@ -9,6 +9,6 @@ Flask-Limiter==3.5.0
 requests==2.32.4
 numpy==2.3.2
 python-dotenv==1.1.1
-openai
+openai==1.6.1
 pinecone-client==5.0.1
 tqdm==4.66.1
