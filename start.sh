@@ -10,14 +10,14 @@ ls -la backend/
 
 # Check Python version
 echo "🐍 Python version:"
-python3 --version || python --version
+/opt/venv/bin/python --version || python3 --version || python --version
 
 # Change to backend directory
 cd backend
 
 # Run health check
 echo "🔍 Running health check:"
-python3 health_check.py
+/opt/venv/bin/python health_check.py || python3 health_check.py
 
 if [ $? -ne 0 ]; then
     echo "❌ Health check failed!"
@@ -25,4 +25,4 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "🎯 Starting production server..."
-exec python3 server.py
+exec /opt/venv/bin/python server.py

@@ -24,8 +24,13 @@ def try_gunicorn():
         logger.info("✅ Flask app imported successfully")
         
         port = os.environ.get('PORT', '5001')
+        
+        # Try to use virtual environment python first, fallback to system python
+        venv_python = '/opt/venv/bin/python'
+        python_exe = venv_python if os.path.exists(venv_python) else 'python'
+        
         cmd = [
-            'python', '-m', 'gunicorn', 
+            python_exe, '-m', 'gunicorn', 
             'app:app',
             '--bind', f'0.0.0.0:{port}',
             '--workers', '1',
@@ -37,7 +42,7 @@ def try_gunicorn():
         logger.info(f"🎯 Starting gunicorn: {' '.join(cmd)}")
         
         # Use execvp to replace current process
-        os.execvp('python', cmd)
+        os.execvp(python_exe, cmd)
         
     except ImportError as e:
         logger.warning(f"Gunicorn not available: {e}")

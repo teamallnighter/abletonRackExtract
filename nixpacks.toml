@@ -1,11 +1,26 @@
+[variables]
+PYTHONDONTWRITEBYTECODE = "1"
+PYTHONUNBUFFERED = "1"
+PIP_NO_CACHE_DIR = "1"
+PIP_DISABLE_PIP_VERSION_CHECK = "1"
+
 [phases.setup]
-nixPkgs = ["python3", "python3Packages.pip"]
+nixPkgs = ["python3", "python3Packages.pip", "python3Packages.venv"]
 
 [phases.install]
-cmds = ["pip install -r backend/requirements.txt"]
+cmds = [
+  "python3 -m venv /opt/venv",
+  "/opt/venv/bin/pip install --upgrade pip setuptools wheel",
+  "/opt/venv/bin/pip install -r backend/requirements.txt --no-cache-dir"
+]
 
 [phases.build]
-cmds = ["echo 'Build phase completed'"]
+cmds = [
+  "echo 'Build phase completed'",
+  "echo 'Verifying virtual environment:'",
+  "ls -la /opt/venv/bin/",
+  "/opt/venv/bin/python --version"
+]
 
 [start]
-cmd = "cd backend && python server.py"
+cmd = "cd backend && /opt/venv/bin/python server.py"
