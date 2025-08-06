@@ -627,13 +627,13 @@ def complete_enhanced_upload():
         if not rack_id:
             return jsonify({'error': 'Failed to save analysis'}), 500
         
-        # Save annotations if provided
+        # Save annotations if provided (skip for now without user auth)
         annotation_ids = []
-        for annotation in annotations:
-            if annotation.get('content', '').strip():
-                annotation_id = db.create_annotation(rack_id, current_user['_id'], annotation)
-                if annotation_id:
-                    annotation_ids.append(annotation_id)
+        # for annotation in annotations:
+        #     if annotation.get('content', '').strip():
+        #         annotation_id = db.create_annotation(rack_id, None, annotation)
+        #         if annotation_id:
+        #             annotation_ids.append(annotation_id)
         
         # Clean up temp directory
         from flask import current_app
