@@ -1,0 +1,32 @@
+{
+  "summary": {
+    "started_at": "2025-08-07 06:02:54.386378",
+    "analysis": {
+      "racks_count": 0,
+      "users_count": 0,
+      "comments_count": 0,
+      "ratings_count": 0,
+      "annotations_count": 0,
+      "favorites_count": 0,
+      "collections_count": 0,
+      "estimated_size": 0
+    },
+    "racks_migration": {
+      "processed": 0,
+      "successful": 0,
+      "failed": 0
+    },
+    "users_migration": {
+      "processed": 0,
+      "successful": 0,
+      "failed": 0,
+      "errors": []
+    },
+    "errors": [],
+    "success": true,
+    "completed_at": "2025-08-07 06:02:54.386896",
+    "duration": 0.000518
+  },
+  "migration_log": [],
+  "failed_migrations": []
+}
