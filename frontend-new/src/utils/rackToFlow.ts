@@ -32,10 +32,14 @@ export const convertRackToFlow = (analysis: RackAnalysis): { nodes: RackFlowNode
   analysis.chains.forEach((chain, chainIndex) => {
     const chainContainerId = getNextId();
 
-    // Position chains horizontally
+    // Position chains horizontally - center devices within container
     const chainX = chainIndex * CHAIN_SPACING;
     const chainY = 100;
-
+    
+    // Device positioning within chain
+    const deviceWidth = 150;
+    const deviceX = chainX + (CHAIN_WIDTH - deviceWidth) / 2; // Center devices in chain
+    
     // Calculate how many devices (including nested) we'll have
     let totalDeviceCount = 0;
     chain.devices.forEach(device => {
@@ -50,15 +54,21 @@ export const convertRackToFlow = (analysis: RackAnalysis): { nodes: RackFlowNode
       }
     });
 
-    // Calculate container height based on device count
-    const containerHeight = Math.max(200, 60 + (totalDeviceCount * 70)); // 60px header + devices
-    const containerWidth = CHAIN_WIDTH + 40; // Bit wider than old chain width
+    // Calculate container dimensions
+    const containerPadding = 20;
+    const headerHeight = 60;
+    const containerHeight = Math.max(300, headerHeight + (totalDeviceCount * 70) + containerPadding * 2);
+    const containerWidth = CHAIN_WIDTH + containerPadding * 2;
+
+    // Position container to properly encompass devices
+    const containerX = chainX - containerPadding;
+    const containerY = chainY - containerPadding;
 
     // Create chain container background
     nodes.push({
       id: chainContainerId,
       type: 'chainContainer',
-      position: { x: chainX - 20, y: chainY - 20 }, // Offset to contain devices
+      position: { x: containerX, y: containerY },
       data: {
         label: chain.name || `Chain ${chainIndex + 1}`,
         type: 'chainContainer',
@@ -74,7 +84,7 @@ export const convertRackToFlow = (analysis: RackAnalysis): { nodes: RackFlowNode
     });
 
     // Create device nodes within the chain container
-    let deviceY = chainY + 40; // Start below container header
+    let deviceY = chainY + headerHeight; // Start below container header
     let previousDeviceId = chainContainerId; // Connect first device to container
 
     chain.devices.forEach((device) => {
@@ -82,7 +92,6 @@ export const convertRackToFlow = (analysis: RackAnalysis): { nodes: RackFlowNode
       if (device.chains && device.chains.length > 0) {
         // First, create the container rack node
         const containerDeviceNodeId = getNextId();
-        const deviceX = chainX + (CHAIN_WIDTH - 150) / 2;
 
         nodes.push({
           id: containerDeviceNodeId,
@@ -164,13 +173,10 @@ export const convertRackToFlow = (analysis: RackAnalysis): { nodes: RackFlowNode
         // Regular device (not a nested rack)
         const deviceNodeId = getNextId();
 
-        // Position devices vertically below chain
-        const deviceX = chainX + (CHAIN_WIDTH - 150) / 2; // Center devices in chain
-
         nodes.push({
           id: deviceNodeId,
           type: 'device',
-          position: { x: deviceX, y: deviceY },
+          position: { x: deviceX, y: deviceY }, // Use consistent deviceX positioning
           data: {
             label: device.name,
             type: 'device',

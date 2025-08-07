@@ -29,12 +29,12 @@ const ChainContainer = memo(({ data }: NodeProps & { data: ChainContainerData })
         borderStyle: 'solid',
         borderRadius: '12px',
         position: 'relative' as const,
-        zIndex: -1, // Place behind devices
-        pointerEvents: 'none' as const, // Don't interfere with device interactions
+        cursor: 'move', // Make it clear this is draggable
+        pointerEvents: 'all' as const, // Enable dragging
     };
 
     return (
-        <div style={containerStyle} className="chain-container shadow-sm">
+        <div style={containerStyle} className="chain-container shadow-lg">
             {/* Chain Header */}
             <div
                 className="absolute top-0 left-0 right-0 px-3 py-2 rounded-t-lg border-b-2 font-semibold"
@@ -62,7 +62,10 @@ const ChainContainer = memo(({ data }: NodeProps & { data: ChainContainerData })
 
             {/* Chain Body - where devices will be positioned */}
             <div className="absolute inset-0 top-12 p-2">
-                {/* This space will contain the devices */}
+                {/* This space contains the devices */}
+                <div className="text-xs text-gray-500 text-center mt-4 opacity-75">
+                    Drag to move all devices in this chain
+                </div>
             </div>
         </div>
     );
