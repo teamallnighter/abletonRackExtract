@@ -336,16 +336,19 @@ def parse_device(device_elem, parent_preset=None):
         device_info["is_on"] = on_elem.get("Value") == "true"
     
     # If this is a nested rack, parse its chains
-    if device_type == "AudioEffectGroupDevice" and parent_preset is not None:
+    if device_type in ["AudioEffectGroupDevice", "InstrumentGroupDevice", "MidiEffectGroupDevice"] and parent_preset is not None:
         nested_chains = []
         # For nested racks, BranchPresets is at the same level as Device in GroupDevicePreset
         if parent_preset.tag == "GroupDevicePreset":
             branch_presets = parent_preset.find("BranchPresets")
             if branch_presets is not None:
-                for idx, branch_preset in enumerate(branch_presets.findall("AudioEffectBranchPreset")):
-                    chain_info = parse_single_chain_branch(branch_preset, idx)
-                    if chain_info:
-                        nested_chains.append(chain_info)
+                # Get the appropriate branch preset type for this nested rack
+                nested_branch_type = get_branch_preset_type(device_type)
+                if nested_branch_type:
+                    for idx, branch_preset in enumerate(branch_presets.findall(nested_branch_type)):
+                        chain_info = parse_single_chain_branch(branch_preset, idx)
+                        if chain_info:
+                            nested_chains.append(chain_info)
         device_info["chains"] = nested_chains
     
     return device_info
