@@ -57,7 +57,7 @@ export const convertRackToFlow = (analysis: RackAnalysis): { nodes: RackFlowNode
     // Calculate container dimensions
     const containerPadding = 20;
     const headerHeight = 60;
-    const containerHeight = Math.max(300, headerHeight + (totalDeviceCount * 70) + containerPadding * 2);
+    const containerHeight = Math.max(300, headerHeight + (totalDeviceCount * DEVICE_SPACING) + containerPadding * 2);
     const containerWidth = CHAIN_WIDTH + containerPadding * 2;
 
     // Position container to properly encompass devices
@@ -207,33 +207,42 @@ export const convertRackToFlow = (analysis: RackAnalysis): { nodes: RackFlowNode
     });
   });
 
-  // Create macro control nodes
-  const macroStartY = 50;
-  const macroSpacing = 80;
-
-  analysis.macro_controls.forEach((macro, index) => {
-    const macroNodeId = getNextId();
-
-    nodes.push({
-      id: macroNodeId,
-      type: 'macro',
-      position: {
-        x: -200,
-        y: macroStartY + (index * macroSpacing)
-      },
-      data: {
-        label: macro.name || `Macro ${macro.index + 1}`,
-        type: 'macro',
-        data: macro,
-      }
-    });
-
-    // TODO: Add macro control mappings to device parameters
-    // This would require more detailed analysis of the macro mappings
-    // from the backend to know which devices/parameters are controlled
+  // ... existing code ...
+});
   });
 
-  return { nodes, edges };
+// Create macro control nodes
+// const macroStartY = 50;
+// const macroSpacing = 80;
+
+// analysis.macro_controls.forEach((macro, index) => {
+//   const macroNodeId = getNextId();
+
+//   nodes.push({
+//     id: macroNodeId,
+//     type: 'macro',
+//     position: {
+//       x: -200,
+//       y: macroStartY + (index * macroSpacing)
+//     },
+//     data: {
+//       label: macro.name || `Macro ${macro.index + 1}`,
+//       type: 'macro',
+//       data: macro,
+//     }
+//   });
+
+//   // TODO: Add macro control mappings to device parameters
+//   // This would require more detailed analysis of the macro mappings
+//   // from the backend to know which devices/parameters are controlled
+// });
+
+return { nodes, edges };
+};
+
+// Utility to get device color based on type
+// ... existing code ...
+
 };
 
 // Utility to get device color based on type

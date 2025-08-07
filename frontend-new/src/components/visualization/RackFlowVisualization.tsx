@@ -47,7 +47,7 @@ const RackFlowVisualizationInner = () => {
   const [, setEdges] = useEdgesState(initialEdges as Edge[]);
 
   // Performance optimizations
-  const { optimizedEdges, performanceSettings, isPerformanceMode } = usePerformanceOptimizations({
+  const { optimizedEdges, performanceSettings } = usePerformanceOptimizations({
     nodes: initialNodes,
     edges: initialEdges
   });
@@ -123,11 +123,13 @@ const RackFlowVisualizationInner = () => {
         className="react-flow-rack-visualization"
         minZoom={0.1}
         maxZoom={2}
-        snapToGrid={isPerformanceMode}
-        snapGrid={[10, 10]}
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable={true}
+        panOnDrag={false}
+        zoomOnScroll={false}
+        zoomOnPinch={false}
+        zoomOnDoubleClick={false}
       >
         <Controls />
         <MiniMap />
