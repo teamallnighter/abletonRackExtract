@@ -23,7 +23,6 @@ import ChainContainer from './ChainContainer';
 import DeviceNode from './DeviceNode';
 import MacroNode from './MacroNode';
 import KeyboardShortcutsHelp from './KeyboardShortcutsHelp';
-import ViewportControls from './ViewportControls';
 import ExportControls from './ExportControls';
 import PerformanceMonitor from './PerformanceMonitor';
 
@@ -136,7 +135,6 @@ const RackFlowVisualizationInner = () => {
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
       </ReactFlow>
 
-      <ViewportControls />
       <div className="absolute top-4 right-4 z-30">
         <ExportControls />
       </div>
