@@ -1,0 +1,76 @@
+name: 🚀 Build and Deploy Frontend
+
+on:
+  push:
+    branches: [ main ]
+    paths: 
+      - 'frontend-new/**'
+      - '.github/workflows/deploy.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'frontend-new/**'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: 'frontend-new/package-lock.json'
+
+    - name: 📦 Install dependencies
+      working-directory: ./frontend-new
+      run: npm ci
+
+    - name: 🏗️ Build React app
+      working-directory: ./frontend-new
+      run: npm run build
+
+    - name: 📋 Copy build to backend
+      run: |
+        # Remove old build files
+        rm -rf backend/static/frontend/*
+        # Copy new build files
+        cp -r frontend-new/dist/* backend/static/frontend/
+        
+    - name: 🔍 Check if there are changes
+      id: verify-changed-files
+      run: |
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "changed=true" >> $GITHUB_OUTPUT
+        else
+          echo "changed=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: 💾 Commit and push changes (main branch only)
+      if: steps.verify-changed-files.outputs.changed == 'true' && github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add backend/static/frontend/
+        git commit -m "🤖 Auto-deploy: Update frontend build from ${{ github.sha }}"
+        git push
+
+    - name: ✅ Build completed
+      run: |
+        echo "🎉 Frontend build completed successfully!"
+        if [ "${{ steps.verify-changed-files.outputs.changed }}" == "true" ]; then
+          if [ "${{ github.ref }}" == "refs/heads/main" ] && [ "${{ github.event_name }}" == "push" ]; then
+            echo "📦 Changes committed and pushed to trigger Railway deployment"
+          else
+            echo "🔍 Changes detected but not deployed (not main branch push)"
+          fi
+        else
+          echo "📝 No changes detected in build output"
+        fi

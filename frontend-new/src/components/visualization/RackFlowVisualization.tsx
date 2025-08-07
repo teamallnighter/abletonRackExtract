@@ -56,7 +56,7 @@ const RackFlowVisualizationInner = () => {
       if (change.type === 'position' && change.position) {
         setNodesState(currentNodes => {
           const node = currentNodes.find(n => n.id === change.id);
-          
+
           // If a chain container moved, move all its child devices
           if (node?.type === 'chainContainer') {
             const chainId = node.id;
@@ -77,7 +77,7 @@ const RackFlowVisualizationInner = () => {
               return n;
             });
           }
-          
+
           return currentNodes;
         });
       }

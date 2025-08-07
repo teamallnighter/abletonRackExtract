@@ -35,11 +35,11 @@ export const convertRackToFlow = (analysis: RackAnalysis): { nodes: RackFlowNode
     // Position chains horizontally - center devices within container
     const chainX = chainIndex * CHAIN_SPACING;
     const chainY = 100;
-    
+
     // Device positioning within chain
     const deviceWidth = 150;
     const deviceX = chainX + (CHAIN_WIDTH - deviceWidth) / 2; // Center devices in chain
-    
+
     // Calculate how many devices (including nested) we'll have
     let totalDeviceCount = 0;
     chain.devices.forEach(device => {
