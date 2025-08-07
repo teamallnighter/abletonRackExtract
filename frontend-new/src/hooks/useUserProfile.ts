@@ -46,13 +46,16 @@ export const useUserStats = () => {
   return useQuery({
     queryKey: ['user', 'stats'],
     queryFn: async (): Promise<UserStats> => {
+      console.log('Fetching user stats...');
       const response = await fetch('/api/user/stats', {
         headers: AuthService.getAuthHeaders(),
       });
       if (!response.ok) {
+        console.error('Failed to fetch user stats:', response.status, response.statusText);
         throw new Error('Failed to fetch user stats');
       }
       const data = await response.json();
+      console.log('User stats response:', data);
       return data.stats;
     },
     staleTime: 1000 * 60 * 5,
@@ -65,15 +68,21 @@ export const useUserRacks = () => {
   return useQuery({
     queryKey: ['user', 'racks'],
     queryFn: async (): Promise<UserRack[]> => {
+      console.log('Fetching user racks...');
       const response = await fetch('/api/user/racks', {
         headers: AuthService.getAuthHeaders(),
       });
       if (!response.ok) {
+        console.error('Failed to fetch user racks:', response.status, response.statusText);
         throw new Error('Failed to fetch user racks');
       }
-      return response.json();
+      const data = await response.json();
+      console.log('User racks response:', data);
+      return data.racks || [];
     },
     staleTime: 1000 * 60 * 2,
+    retry: 2,
+    retryDelay: 1000,
   });
 };
 
@@ -87,9 +96,12 @@ export const useUserFavorites = () => {
       if (!response.ok) {
         throw new Error('Failed to fetch favorites');
       }
-      return response.json();
+      const data = await response.json();
+      return data.favorites || [];
     },
     staleTime: 1000 * 60 * 2,
+    retry: 2,
+    retryDelay: 1000,
   });
 };
 

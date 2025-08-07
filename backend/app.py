@@ -14,6 +14,7 @@ from pathlib import Path
 from flask import Flask, request, jsonify, send_file, render_template
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
+from bson import ObjectId
 import jwt
 from functools import wraps
 import secrets
@@ -725,17 +726,30 @@ def get_user_stats(current_user):
     """Get user statistics"""
     try:
         user_id = current_user['_id']
+        logger.info(f"Getting stats for user: {user_id}")
         
         # Get efficient stats counts
         stats_counts = db.get_user_stats_counts(user_id)
+        logger.info(f"Stats counts: {stats_counts}")
         
-        # Get user creation date
-        member_since = current_user.get('created_at', current_user.get('_id').generation_time.isoformat())
+        # Get user creation date - try to get from user data in database
+        try:
+            user_data = db.users_collection.find_one({'_id': ObjectId(user_id)})
+            if user_data and 'created_at' in user_data:
+                member_since = user_data['created_at']
+                if isinstance(member_since, datetime):
+                    member_since = member_since.isoformat()
+            else:
+                # Fallback to ObjectId generation time
+                member_since = ObjectId(user_id).generation_time.isoformat()
+        except Exception:
+            # Last resort fallback
+            member_since = datetime.utcnow().isoformat()
         
         # Get last active (for now, use current time - could be enhanced with actual activity tracking)
         last_active = datetime.utcnow().isoformat()
         
-        return jsonify({
+        result = {
             'success': True,
             'stats': {
                 'uploadsCount': stats_counts['uploads_count'],
@@ -744,7 +758,9 @@ def get_user_stats(current_user):
                 'memberSince': member_since,
                 'lastActive': last_active
             }
-        }), 200
+        }
+        logger.info(f"Returning stats: {result}")
+        return jsonify(result), 200
         
     except Exception as e:
         logger.error(f"Failed to get user stats: {e}")
