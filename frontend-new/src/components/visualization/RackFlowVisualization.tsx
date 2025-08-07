@@ -19,6 +19,7 @@ import { convertRackToFlow } from '../../utils/rackToFlow';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { usePerformanceOptimizations } from '../../hooks/usePerformanceOptimizations';
 import ChainNode from './ChainNode';
+import ChainContainer from './ChainContainer';
 import DeviceNode from './DeviceNode';
 import MacroNode from './MacroNode';
 import KeyboardShortcutsHelp from './KeyboardShortcutsHelp';
@@ -28,7 +29,7 @@ import PerformanceMonitor from './PerformanceMonitor';
 
 const RackFlowVisualizationInner = () => {
   const { currentRack, setSelectedNode, selectedNodeId, setNodes } = useRackStore();
-  
+
   // Enable keyboard shortcuts
   useKeyboardShortcuts();
 
@@ -37,28 +38,28 @@ const RackFlowVisualizationInner = () => {
     if (!currentRack?.analysis) {
       return { initialNodes: [], initialEdges: [] };
     }
-    
+
     const { nodes, edges } = convertRackToFlow(currentRack.analysis);
     return { initialNodes: nodes, initialEdges: edges };
   }, [currentRack]);
 
   const [nodes, , onNodesChange] = useNodesState(initialNodes as unknown as Node[]);
   const [, setEdges, onEdgesChange] = useEdgesState(initialEdges as Edge[]);
-  
+
   // Performance optimizations
   const { optimizedEdges, performanceSettings, isPerformanceMode } = usePerformanceOptimizations({
     nodes: initialNodes,
     edges: initialEdges
   });
-  
+
   // Get React Flow instance for programmatic control
   const reactFlowInstance = useReactFlow();
-  
+
   // Update store nodes when React Flow nodes change
   useEffect(() => {
     setNodes(initialNodes);
   }, [initialNodes, setNodes]);
-  
+
   // Handle fitView with performance settings
   useEffect(() => {
     if (reactFlowInstance && initialNodes.length > 0) {
@@ -72,6 +73,7 @@ const RackFlowVisualizationInner = () => {
   const nodeTypes = useMemo(
     () => ({
       chain: ChainNode,
+      chainContainer: ChainContainer,
       device: DeviceNode,
       macro: MacroNode,
     }),
@@ -130,7 +132,7 @@ const RackFlowVisualizationInner = () => {
         <MiniMap />
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
       </ReactFlow>
-      
+
       <ViewportControls />
       <div className="absolute top-4 right-4 z-30">
         <ExportControls />

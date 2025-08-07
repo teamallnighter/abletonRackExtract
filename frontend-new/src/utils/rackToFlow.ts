@@ -24,88 +24,149 @@ export const getChainColor = (chainIndex: number): string => {
 export const convertRackToFlow = (analysis: RackAnalysis): { nodes: RackFlowNode[], edges: RackFlowEdge[] } => {
   const nodes: RackFlowNode[] = [];
   const edges: RackFlowEdge[] = [];
-  
+
   let nodeId = 0;
   const getNextId = () => `node-${nodeId++}`;
-  
-  // Create chain nodes
+
+  // Create chain containers and devices
   analysis.chains.forEach((chain, chainIndex) => {
-    const chainNodeId = getNextId();
-    
+    const chainContainerId = getNextId();
+
     // Position chains horizontally
     const chainX = chainIndex * CHAIN_SPACING;
     const chainY = 100;
-    
-    // Create chain node
+
+    // Calculate how many devices (including nested) we'll have
+    let totalDeviceCount = 0;
+    chain.devices.forEach(device => {
+      if (device.chains && device.chains.length > 0) {
+        // Count container + nested devices
+        totalDeviceCount += 1; // container
+        device.chains.forEach(nestedChain => {
+          totalDeviceCount += nestedChain.devices.length;
+        });
+      } else {
+        totalDeviceCount += 1;
+      }
+    });
+
+    // Calculate container height based on device count
+    const containerHeight = Math.max(200, 60 + (totalDeviceCount * 70)); // 60px header + devices
+    const containerWidth = CHAIN_WIDTH + 40; // Bit wider than old chain width
+
+    // Create chain container background
     nodes.push({
-      id: chainNodeId,
-      type: 'chain',
-      position: { x: chainX, y: chainY },
+      id: chainContainerId,
+      type: 'chainContainer',
+      position: { x: chainX - 20, y: chainY - 20 }, // Offset to contain devices
       data: {
         label: chain.name || `Chain ${chainIndex + 1}`,
-        type: 'chain',
+        type: 'chainContainer',
         data: chain,
-        chainId: chainNodeId,
+        chainId: chainContainerId,
         chainIndex: chainIndex,
         chainName: chain.name || `Chain ${chainIndex + 1}`,
         chainColor: getChainColor(chainIndex),
+        width: containerWidth,
+        height: containerHeight,
+        deviceCount: totalDeviceCount,
       }
     });
-    
-    // Create device nodes within the chain
-    let deviceY = chainY + 150;
-    let previousDeviceId = chainNodeId;
-    
+
+    // Create device nodes within the chain container
+    let deviceY = chainY + 40; // Start below container header
+    let previousDeviceId = chainContainerId; // Connect first device to container
+
     chain.devices.forEach((device) => {
       // Check if this device has nested chains (Instrument/MIDI racks)
       if (device.chains && device.chains.length > 0) {
-        // For nested racks, show the individual devices instead of the container
+        // First, create the container rack node
+        const containerDeviceNodeId = getNextId();
+        const deviceX = chainX + (CHAIN_WIDTH - 150) / 2;
+
+        nodes.push({
+          id: containerDeviceNodeId,
+          type: 'device',
+          position: { x: deviceX, y: deviceY },
+          data: {
+            label: `${device.name} (${device.chains.length} chains)`,
+            type: 'device',
+            data: device,
+            chainId: chainContainerId,
+            chainIndex: chainIndex,
+            chainName: chain.name || `Chain ${chainIndex + 1}`,
+            chainColor: getChainColor(chainIndex),
+            isContainer: true,
+          }
+        });
+
+        // Create edge from previous device/chain to container
+        edges.push({
+          id: `edge-${previousDeviceId}-${containerDeviceNodeId}`,
+          source: previousDeviceId,
+          target: containerDeviceNodeId,
+          type: 'smoothstep',
+          animated: device.is_on,
+          style: {
+            stroke: device.is_on ? '#8b5cf6' : '#9ca3af', // Purple for container racks
+            strokeWidth: device.is_on ? 3 : 2
+          },
+        });
+
+        previousDeviceId = containerDeviceNodeId;
+        deviceY += DEVICE_SPACING;
+
+        // Then create the nested devices with indentation
         device.chains.forEach((nestedChain) => {
           nestedChain.devices.forEach((nestedDevice) => {
             const nestedDeviceNodeId = getNextId();
-            
-            // Position devices vertically below chain
-            const deviceX = chainX + (CHAIN_WIDTH - 150) / 2; // Center devices in chain
-            
+
+            // Indent nested devices to show hierarchy
+            const nestedDeviceX = deviceX + 30; // Slightly indent nested devices
+
             nodes.push({
               id: nestedDeviceNodeId,
               type: 'device',
-              position: { x: deviceX, y: deviceY },
+              position: { x: nestedDeviceX, y: deviceY },
               data: {
                 label: nestedDevice.name,
                 type: 'device',
                 data: nestedDevice,
-                chainId: chainNodeId,
+                chainId: chainContainerId,
                 chainIndex: chainIndex,
                 chainName: chain.name || `Chain ${chainIndex + 1}`,
                 chainColor: getChainColor(chainIndex),
+                isNested: true,
+                nestingLevel: 1,
+                parentDevice: device.name,
               }
             });
-            
-            // Create edge from previous device/chain to current device
+
+            // Create edge from previous device to current nested device
             edges.push({
               id: `edge-${previousDeviceId}-${nestedDeviceNodeId}`,
               source: previousDeviceId,
               target: nestedDeviceNodeId,
               type: 'smoothstep',
               animated: nestedDevice.is_on,
-              style: { 
+              style: {
                 stroke: nestedDevice.is_on ? '#10b981' : '#9ca3af',
-                strokeWidth: nestedDevice.is_on ? 3 : 2 
+                strokeWidth: nestedDevice.is_on ? 2 : 1, // Thinner lines for nested devices
+                strokeDasharray: '5,5', // Dashed lines for nested devices
               },
             });
-            
+
             previousDeviceId = nestedDeviceNodeId;
-            deviceY += DEVICE_SPACING;
+            deviceY += DEVICE_SPACING * 0.8; // Slightly closer spacing for nested devices
           });
         });
       } else {
         // Regular device (not a nested rack)
         const deviceNodeId = getNextId();
-        
+
         // Position devices vertically below chain
         const deviceX = chainX + (CHAIN_WIDTH - 150) / 2; // Center devices in chain
-        
+
         nodes.push({
           id: deviceNodeId,
           type: 'device',
@@ -114,13 +175,13 @@ export const convertRackToFlow = (analysis: RackAnalysis): { nodes: RackFlowNode
             label: device.name,
             type: 'device',
             data: device,
-            chainId: chainNodeId,
+            chainId: chainContainerId,
             chainIndex: chainIndex,
             chainName: chain.name || `Chain ${chainIndex + 1}`,
             chainColor: getChainColor(chainIndex),
           }
         });
-        
+
         // Create edge from previous device/chain to current device
         edges.push({
           id: `edge-${previousDeviceId}-${deviceNodeId}`,
@@ -128,31 +189,31 @@ export const convertRackToFlow = (analysis: RackAnalysis): { nodes: RackFlowNode
           target: deviceNodeId,
           type: 'smoothstep',
           animated: device.is_on,
-          style: { 
+          style: {
             stroke: device.is_on ? '#10b981' : '#9ca3af',
-            strokeWidth: device.is_on ? 3 : 2 
+            strokeWidth: device.is_on ? 3 : 2
           },
         });
-        
+
         previousDeviceId = deviceNodeId;
         deviceY += DEVICE_SPACING;
       }
     });
   });
-  
+
   // Create macro control nodes
   const macroStartY = 50;
   const macroSpacing = 80;
-  
+
   analysis.macro_controls.forEach((macro, index) => {
     const macroNodeId = getNextId();
-    
+
     nodes.push({
       id: macroNodeId,
       type: 'macro',
-      position: { 
-        x: -200, 
-        y: macroStartY + (index * macroSpacing) 
+      position: {
+        x: -200,
+        y: macroStartY + (index * macroSpacing)
       },
       data: {
         label: macro.name || `Macro ${macro.index + 1}`,
@@ -160,36 +221,36 @@ export const convertRackToFlow = (analysis: RackAnalysis): { nodes: RackFlowNode
         data: macro,
       }
     });
-    
+
     // TODO: Add macro control mappings to device parameters
     // This would require more detailed analysis of the macro mappings
     // from the backend to know which devices/parameters are controlled
   });
-  
+
   return { nodes, edges };
 };
 
 // Utility to get device color based on type
 export const getDeviceColor = (deviceType: string): string => {
   const type = deviceType.toLowerCase();
-  
+
   if (type.includes('instrument') || type.includes('drum') || type.includes('operator')) {
     return '#3B82F6'; // Blue for instruments
   }
-  
-  if (type.includes('reverb') || type.includes('delay') || type.includes('eq') || 
-      type.includes('compressor') || type.includes('filter')) {
+
+  if (type.includes('reverb') || type.includes('delay') || type.includes('eq') ||
+    type.includes('compressor') || type.includes('filter')) {
     return '#10B981'; // Green for audio effects
   }
-  
+
   if (type.includes('midi') || type.includes('arpeggiator') || type.includes('scale')) {
     return '#8B5CF6'; // Purple for MIDI effects
   }
-  
+
   if (type.includes('utility') || type.includes('gain') || type.includes('spectrum')) {
     return '#6B7280'; // Gray for utilities
   }
-  
+
   return '#EF4444'; // Red for unknown/other
 };
 
@@ -199,14 +260,14 @@ export const formatDeviceInfo = (device: Device): string => {
     `Type: ${device.type}`,
     `Status: ${device.is_on ? 'On' : 'Off'}`,
   ];
-  
+
   if (device.preset_name) {
     parts.push(`Preset: ${device.preset_name}`);
   }
-  
+
   if (device.chains && device.chains.length > 0) {
     parts.push(`Contains ${device.chains.length} nested chain(s)`);
   }
-  
+
   return parts.join('\n');
 };

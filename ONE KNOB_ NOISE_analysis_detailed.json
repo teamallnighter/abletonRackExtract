@@ -1,0 +1,68 @@
+{
+  "rack_name": "ONE KNOB_ NOISE",
+  "use_case": "ONE KNOB_ NOISE",
+  "macro_controls": [
+    {
+      "name": "ONE",
+      "value": 92.5124741,
+      "index": 0
+    }
+  ],
+  "chains": [
+    {
+      "name": "Chain 1",
+      "is_soloed": false,
+      "devices": [
+        {
+          "type": "InstrumentGroupDevice",
+          "name": "Instrument Rack",
+          "is_on": true,
+          "chains": [
+            {
+              "name": "Chain 1",
+              "is_soloed": false,
+              "devices": [
+                {
+                  "type": "Operator",
+                  "name": "Operator",
+                  "is_on": true
+                },
+                {
+                  "type": "AutoFilter",
+                  "name": "Auto Filter",
+                  "is_on": true
+                },
+                {
+                  "type": "StereoGain",
+                  "name": "StereoGain",
+                  "is_on": true
+                },
+                {
+                  "type": "AutoPan",
+                  "name": "Auto Pan",
+                  "is_on": true
+                },
+                {
+                  "type": "Saturator",
+                  "name": "Saturator",
+                  "is_on": true
+                },
+                {
+                  "type": "Limiter",
+                  "name": "Limiter",
+                  "is_on": true
+                },
+                {
+                  "type": "Limiter",
+                  "name": "Limiter",
+                  "is_on": true
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "rack_type": "InstrumentGroupDevice"
+}

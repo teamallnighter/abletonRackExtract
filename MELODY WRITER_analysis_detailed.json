@@ -1,0 +1,50 @@
+{
+  "rack_name": "MELODY WRITER",
+  "use_case": "MELODY WRITER",
+  "macro_controls": [],
+  "chains": [
+    {
+      "name": "Chain 1",
+      "is_soloed": false,
+      "devices": [
+        {
+          "type": "MidiEffectGroupDevice",
+          "name": "MIDI Effect Rack",
+          "is_on": true,
+          "chains": [
+            {
+              "name": "Chain 1",
+              "is_soloed": false,
+              "devices": [
+                {
+                  "type": "MidiArpeggiator",
+                  "name": "MidiArpeggiator",
+                  "is_on": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "MidiEffectGroupDevice",
+          "name": "MIDI Effect Rack",
+          "is_on": true,
+          "chains": [
+            {
+              "name": "Chain 1",
+              "is_soloed": false,
+              "devices": [
+                {
+                  "type": "MidiPitcher",
+                  "name": "MidiPitcher",
+                  "is_on": true
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "rack_type": "MidiEffectGroupDevice"
+}

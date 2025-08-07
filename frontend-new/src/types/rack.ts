@@ -70,19 +70,28 @@ export interface AnalyzeResponse {
 // React Flow node types
 export interface NodeData extends Record<string, unknown> {
   label: string;
-  type: 'chain' | 'device' | 'macro';
+  type: 'chain' | 'device' | 'macro' | 'chainContainer';
   data: Chain | Device | MacroControl;
   isSelected?: boolean;
   // Chain highlighting properties
   chainId?: string;
-  chainIndex?: number; 
+  chainIndex?: number;
   chainName?: string;
   chainColor?: string;
+  // Nested device properties
+  isContainer?: boolean;
+  isNested?: boolean;
+  nestingLevel?: number;
+  parentDevice?: string;
+  // Chain container properties
+  width?: number;
+  height?: number;
+  deviceCount?: number;
 }
 
 export interface RackFlowNode {
   id: string;
-  type: 'chain' | 'device' | 'macro';
+  type: 'chain' | 'device' | 'macro' | 'chainContainer';
   position: { x: number; y: number };
   data: NodeData;
 }
