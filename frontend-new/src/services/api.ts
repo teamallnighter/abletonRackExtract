@@ -6,8 +6,8 @@ const API_BASE = '/api';
 
 export class ApiService {
   static async analyzeRack(
-    file: File, 
-    description?: string, 
+    file: File,
+    description?: string,
     producerName?: string
   ): Promise<AnalyzeResponse> {
     const formData = new FormData();
@@ -31,8 +31,12 @@ export class ApiService {
   }
 
   static async getRack(rackId: string): Promise<{ success: boolean; rack: RackDocument }> {
-    const response = await fetch(`${API_BASE}/racks/${rackId}`);
-    
+    const response = await fetch(`${API_BASE}/racks/${rackId}/enhanced`, {
+      headers: {
+        ...AuthService.getAuthHeaders(),
+      },
+    });
+
     if (!response.ok) {
       throw new Error(`Failed to fetch rack: ${response.statusText}`);
     }
@@ -42,7 +46,7 @@ export class ApiService {
 
   static async getRecentRacks(limit = 10): Promise<{ success: boolean; racks: RackDocument[]; count: number }> {
     const response = await fetch(`${API_BASE}/racks?limit=${limit}`);
-    
+
     if (!response.ok) {
       throw new Error(`Failed to fetch racks: ${response.statusText}`);
     }
@@ -52,7 +56,7 @@ export class ApiService {
 
   static async searchRacks(query: string): Promise<{ success: boolean; racks: RackDocument[]; query: string; count: number }> {
     const response = await fetch(`${API_BASE}/racks/search?q=${encodeURIComponent(query)}`);
-    
+
     if (!response.ok) {
       throw new Error(`Search failed: ${response.statusText}`);
     }
@@ -62,7 +66,7 @@ export class ApiService {
 
   static async downloadFile(fileType: 'xml' | 'json', filename: string): Promise<Blob> {
     const response = await fetch(`${API_BASE}/download/${fileType}/${filename}`);
-    
+
     if (!response.ok) {
       throw new Error(`Download failed: ${response.statusText}`);
     }
@@ -72,7 +76,7 @@ export class ApiService {
 
   static async healthCheck(): Promise<{ status: string; message: string }> {
     const response = await fetch(`${API_BASE}/health`);
-    
+
     if (!response.ok) {
       throw new Error(`Health check failed: ${response.statusText}`);
     }

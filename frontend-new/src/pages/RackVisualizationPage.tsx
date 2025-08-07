@@ -92,41 +92,43 @@ const RackVisualizationPage = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Right Sidebar - 40% width with stacked components */}
         <div className="lg:col-span-2 order-2 lg:order-2 space-y-3 lg:space-y-4">
           {/* Selected Node Details Panel - Top Priority */}
           <div className="bg-white rounded-lg shadow-sm border">
             <RackDetailsPanel />
           </div>
-          
+
           {/* Macro Controls - Quick Access */}
           <div className="bg-white rounded-lg shadow-sm border">
             <div className="p-3 lg:p-4 border-b">
               <h3 className="text-base lg:text-lg font-semibold text-gray-900">Macro Controls</h3>
             </div>
             <div className="p-3 lg:p-4 space-y-2 lg:space-y-3 max-h-48 lg:max-h-64 overflow-y-auto">
-              {currentRack.analysis.macro_controls.map((macro) => (
-                <div key={macro.index} className="flex justify-between items-center">
-                  <span className="text-gray-900 text-sm font-medium truncate pr-2" title={macro.name || `Macro ${macro.index + 1}`}>
-                    {macro.name || `Macro ${macro.index + 1}`}
-                  </span>
-                  <div className="flex items-center space-x-2 flex-shrink-0">
-                    <div className="w-16 bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-200" 
-                        style={{ width: `${(macro.value / 127) * 100}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-xs text-gray-500 w-8 text-right">
-                      {Math.round((macro.value / 127) * 100)}%
+              {currentRack.analysis.macro_controls
+                .filter(macro => macro.name && macro.name.trim() !== '') // Only show named macros
+                .map((macro) => (
+                  <div key={macro.index} className="flex justify-between items-center">
+                    <span className="text-gray-900 text-sm font-medium truncate pr-2" title={macro.name || `Macro ${macro.index + 1}`}>
+                      {macro.name || `Macro ${macro.index + 1}`}
                     </span>
+                    <div className="flex items-center space-x-2 flex-shrink-0">
+                      <div className="w-16 bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-200"
+                          style={{ width: `${(macro.value / 127) * 100}%` }}
+                        ></div>
+                      </div>
+                      <span className="text-xs text-gray-500 w-8 text-right">
+                        {Math.round((macro.value / 127) * 100)}%
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           </div>
-          
+
           {/* Chains List - Browsable */}
           <div className="bg-white rounded-lg shadow-sm border">
             <div className="p-3 lg:p-4 border-b">
