@@ -100,31 +100,42 @@ def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
-        
+        logger.info(f"token_required: Headers: {dict(request.headers)}")
         # Get token from header
         if 'Authorization' in request.headers:
             auth_header = request.headers['Authorization']
+            logger.info(f"token_required: Authorization header: {auth_header}")
             try:
-                token = auth_header.split(' ')[1]  # Bearer ctokene
+                token = auth_header.split(' ')[1]  # Bearer <token>
+                logger.info(f"token_required: Extracted token: {token}")
             except IndexError:
-                pass
-        
+                logger.warning("token_required: Failed to split Authorization header for token.")
+        else:
+            logger.warning("token_required: No Authorization header present.")
+
         if not token:
+            logger.warning("token_required: Token is missing.")
             return jsonify({'error': 'Token is missing'}), 401
-        
+
         try:
             data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            logger.info(f"token_required: Decoded JWT payload: {data}")
             current_user_id = data['user_id']
             current_user = db.get_user_by_id(current_user_id)
             if not current_user:
+                logger.warning("token_required: No user found for user_id in token.")
                 return jsonify({'error': 'Invalid token'}), 401
         except jwt.ExpiredSignatureError:
+            logger.warning("token_required: Token has expired.")
             return jsonify({'error': 'Token has expired'}), 401
-        except jwt.InvalidTokenError:
+        except jwt.InvalidTokenError as e:
+            logger.warning(f"token_required: Invalid token: {e}")
             return jsonify({'error': 'Invalid token'}), 401
-        
+        except Exception as e:
+            logger.error(f"token_required: Unexpected error: {e}")
+            return jsonify({'error': 'Token validation error'}), 401
+
         return f(current_user, *args, **kwargs)
-    
     return decorated
 
 @app.route('/')
