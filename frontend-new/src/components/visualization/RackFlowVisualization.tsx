@@ -44,7 +44,7 @@ const RackFlowVisualizationInner = () => {
   }, [currentRack]);
 
   const [nodes] = useNodesState(initialNodes as unknown as Node[]);
-  const [, setEdges, onEdgesChange] = useEdgesState(initialEdges as Edge[]);
+  const [, setEdges] = useEdgesState(initialEdges as Edge[]);
 
   // Performance optimizations
   const { optimizedEdges, performanceSettings, isPerformanceMode } = usePerformanceOptimizations({
@@ -115,7 +115,6 @@ const RackFlowVisualizationInner = () => {
       <ReactFlow
         nodes={nodes}
         edges={optimizedEdges as Edge[]}
-        onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
         nodeTypes={nodeTypes}
