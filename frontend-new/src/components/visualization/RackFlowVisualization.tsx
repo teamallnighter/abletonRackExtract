@@ -43,7 +43,7 @@ const RackFlowVisualizationInner = () => {
     return { initialNodes: nodes, initialEdges: edges };
   }, [currentRack]);
 
-  const [nodes, , onNodesChange] = useNodesState(initialNodes as unknown as Node[]);
+  const [nodes] = useNodesState(initialNodes as unknown as Node[]);
   const [, setEdges, onEdgesChange] = useEdgesState(initialEdges as Edge[]);
 
   // Performance optimizations

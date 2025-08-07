@@ -9,6 +9,7 @@ const Profile: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
 
+  // Force rebuild - Profile page data loading fix
   const { isLoading: profileLoading } = useUserProfile();
   const { data: stats, isLoading: statsLoading } = useUserStats();
   const { data: userRacks, isLoading: racksLoading } = useUserRacks();
