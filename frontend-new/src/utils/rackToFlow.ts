@@ -57,7 +57,7 @@ export const convertRackToFlow = (analysis: RackAnalysis): { nodes: RackFlowNode
     // Calculate container dimensions
     const containerPadding = 20;
     const headerHeight = 60;
-    const containerHeight = Math.max(300, headerHeight + (totalDeviceCount * DEVICE_SPACING) + containerPadding * 2);
+    const containerHeight = headerHeight + (totalDeviceCount * DEVICE_SPACING) + containerPadding * 2;
     const containerWidth = CHAIN_WIDTH + containerPadding * 2;
 
     // Position container to properly encompass devices
