@@ -537,6 +537,48 @@ class MongoDB:
             logger.error(f"Failed to get user racks: {e}")
             return []
     
+    def get_user_stats_counts(self, user_id):
+        """Get user statistics counts efficiently"""
+        if not self.connected:
+            if not self.connect():
+                return {
+                    'uploads_count': 0,
+                    'favorites_count': 0,
+                    'total_downloads': 0
+                }
+        
+        try:
+            # Count uploads
+            uploads_count = self.collection.count_documents({'user_id': user_id})
+            
+            # Count favorites
+            favorites_count = self.favorites_collection.count_documents({'user_id': user_id})
+            
+            # Sum total downloads from user's racks
+            pipeline = [
+                {'$match': {'user_id': user_id}},
+                {'$group': {
+                    '_id': None,
+                    'total_downloads': {'$sum': '$download_count'}
+                }}
+            ]
+            
+            download_result = list(self.collection.aggregate(pipeline))
+            total_downloads = download_result[0]['total_downloads'] if download_result else 0
+            
+            return {
+                'uploads_count': uploads_count,
+                'favorites_count': favorites_count,
+                'total_downloads': total_downloads
+            }
+        except Exception as e:
+            logger.error(f"Failed to get user stats counts: {e}")
+            return {
+                'uploads_count': 0,
+                'favorites_count': 0,
+                'total_downloads': 0
+            }
+    
     def get_racks_by_producer(self, producer_name, limit=50):
         """Get racks by producer name (for anonymous uploads and attribution)"""
         if not self.connected:

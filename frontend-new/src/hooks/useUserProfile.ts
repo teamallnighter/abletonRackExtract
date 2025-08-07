@@ -52,9 +52,12 @@ export const useUserStats = () => {
       if (!response.ok) {
         throw new Error('Failed to fetch user stats');
       }
-      return response.json();
+      const data = await response.json();
+      return data.stats;
     },
     staleTime: 1000 * 60 * 5,
+    retry: 2,
+    retryDelay: 1000,
   });
 };
 
@@ -92,7 +95,7 @@ export const useUserFavorites = () => {
 
 export const useToggleFavorite = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ rackId, isFavorited }: { rackId: string; isFavorited: boolean }) => {
       const response = await fetch(`/api/racks/${rackId}/favorite`, {
@@ -114,7 +117,7 @@ export const useToggleFavorite = () => {
 
 export const useUpdateProfile = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (updates: Partial<User>) => {
       const response = await fetch('/api/user/profile', {
@@ -141,7 +144,7 @@ export const useUpdateProfile = () => {
 
 export const useDeleteRack = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (rackId: string) => {
       const response = await fetch(`/api/racks/${rackId}`, {

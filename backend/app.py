@@ -9,6 +9,7 @@ import json
 import tempfile
 import shutil
 import logging
+from datetime import datetime
 from pathlib import Path
 from flask import Flask, request, jsonify, send_file, render_template
 from flask_cors import CORS
@@ -717,6 +718,37 @@ def get_profile(current_user):
     except Exception as e:
         logger.error(f"Failed to get profile: {e}")
         return jsonify({'error': 'Failed to get profile'}), 500
+
+@app.route('/api/user/stats', methods=['GET'])
+@token_required
+def get_user_stats(current_user):
+    """Get user statistics"""
+    try:
+        user_id = current_user['_id']
+        
+        # Get efficient stats counts
+        stats_counts = db.get_user_stats_counts(user_id)
+        
+        # Get user creation date
+        member_since = current_user.get('created_at', current_user.get('_id').generation_time.isoformat())
+        
+        # Get last active (for now, use current time - could be enhanced with actual activity tracking)
+        last_active = datetime.utcnow().isoformat()
+        
+        return jsonify({
+            'success': True,
+            'stats': {
+                'uploadsCount': stats_counts['uploads_count'],
+                'favoritesCount': stats_counts['favorites_count'],
+                'totalDownloads': stats_counts['total_downloads'],
+                'memberSince': member_since,
+                'lastActive': last_active
+            }
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Failed to get user stats: {e}")
+        return jsonify({'error': 'Failed to get user stats'}), 500
 
 @app.route('/api/user/racks', methods=['GET'])
 @token_required

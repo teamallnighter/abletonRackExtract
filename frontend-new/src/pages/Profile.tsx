@@ -8,7 +8,7 @@ type TabType = 'overview' | 'uploads' | 'favorites' | 'settings';
 const Profile: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
-  
+
   const { isLoading: profileLoading } = useUserProfile();
   const { data: stats, isLoading: statsLoading } = useUserStats();
   const { data: userRacks, isLoading: racksLoading } = useUserRacks();
@@ -33,7 +33,8 @@ const Profile: React.FC = () => {
     { id: 'settings', label: 'Settings', icon: '⚙️' },
   ] as const;
 
-  if (profileLoading || statsLoading) {
+  // Show loading only for critical data (profile)
+  if (profileLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-8">
@@ -67,35 +68,63 @@ const Profile: React.FC = () => {
                   {user?.username?.charAt(0).toUpperCase()}
                 </span>
               </div>
-              
+
               <div className="flex-1">
                 <h1 className="text-3xl font-bold text-gray-900">{user?.username}</h1>
                 <p className="text-gray-600 mt-1">{user?.email}</p>
-                
-                {stats && (
-                  <div className="flex flex-wrap gap-6 mt-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">{stats.uploadsCount}</div>
-                      <div className="text-sm text-gray-500">Racks</div>
+
+                <div className="flex flex-wrap gap-6 mt-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {statsLoading ? (
+                        <div className="w-6 h-6 bg-gray-200 rounded animate-pulse"></div>
+                      ) : (
+                        stats?.uploadsCount ?? 0
+                      )}
                     </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-red-600">{stats.favoritesCount}</div>
-                      <div className="text-sm text-gray-500">Favorites</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-green-600">{stats.totalDownloads}</div>
-                      <div className="text-sm text-gray-500">Downloads</div>
-                    </div>
+                    <div className="text-sm text-gray-500">Racks</div>
                   </div>
-                )}
-                
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-red-600">
+                      {statsLoading ? (
+                        <div className="w-6 h-6 bg-gray-200 rounded animate-pulse"></div>
+                      ) : (
+                        stats?.favoritesCount ?? 0
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-500">Favorites</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">
+                      {statsLoading ? (
+                        <div className="w-6 h-6 bg-gray-200 rounded animate-pulse"></div>
+                      ) : (
+                        stats?.totalDownloads ?? 0
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-500">Downloads</div>
+                  </div>
+                </div>
+
                 <div className="flex items-center space-x-4 mt-4">
                   <span className="text-sm text-gray-500">
-                    Member since {stats?.memberSince ? new Date(stats.memberSince).toLocaleDateString() : 'N/A'}
+                    Member since {statsLoading ? (
+                      <span className="inline-block w-16 h-3 bg-gray-200 rounded animate-pulse"></span>
+                    ) : stats?.memberSince ? (
+                      new Date(stats.memberSince).toLocaleDateString()
+                    ) : (
+                      'N/A'
+                    )}
                   </span>
                   <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
                   <span className="text-sm text-gray-500">
-                    Last active {stats?.lastActive ? new Date(stats.lastActive).toLocaleDateString() : 'Today'}
+                    Last active {statsLoading ? (
+                      <span className="inline-block w-12 h-3 bg-gray-200 rounded animate-pulse"></span>
+                    ) : stats?.lastActive ? (
+                      new Date(stats.lastActive).toLocaleDateString()
+                    ) : (
+                      'Today'
+                    )}
                   </span>
                 </div>
               </div>
@@ -122,11 +151,10 @@ const Profile: React.FC = () => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                      activeTab === tab.id
+                    className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
                         ? 'border-blue-500 text-blue-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
+                      }`}
                   >
                     <span className="flex items-center space-x-2">
                       <span>{tab.icon}</span>
@@ -248,18 +276,18 @@ const Profile: React.FC = () => {
                                 </div>
                               </div>
                             </div>
-                            
+
                             <p className="text-sm text-gray-600 mb-4 line-clamp-2">
                               {rack.description || 'No description provided'}
                             </p>
-                            
+
                             <div className="space-y-3">
                               <div className="flex justify-between text-xs text-gray-500">
                                 <span>{rack.stats.total_chains} chains</span>
                                 <span>{rack.stats.total_devices} devices</span>
                                 <span>{rack.download_count} downloads</span>
                               </div>
-                              
+
                               <div className="flex items-center justify-between">
                                 <span className="text-xs text-gray-400">
                                   {new Date(rack.created_at).toLocaleDateString()}
@@ -343,18 +371,18 @@ const Profile: React.FC = () => {
                                 </svg>
                               </div>
                             </div>
-                            
+
                             <p className="text-sm text-gray-600 mb-4 line-clamp-2">
                               {rack.description || 'No description provided'}
                             </p>
-                            
+
                             <div className="space-y-3">
                               <div className="flex justify-between text-xs text-gray-500">
                                 <span>{rack.stats.total_chains} chains</span>
                                 <span>{rack.stats.total_devices} devices</span>
                                 <span>{rack.stats.macro_controls} macros</span>
                               </div>
-                              
+
                               <div className="text-xs text-gray-400">
                                 Added {new Date(rack.created_at).toLocaleDateString()}
                               </div>
