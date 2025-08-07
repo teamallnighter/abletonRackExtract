@@ -41,10 +41,13 @@ from enhanced_routes import enhanced_bp
 project_root = Path(__file__).parent.parent
 backend_root = Path(__file__).parent
 
+# Serve React app from frontend-new/dist
+react_build_folder = project_root / 'frontend-new' / 'dist'
+
 app = Flask(__name__, 
-           template_folder=str(project_root / 'templates'),
-           static_folder=str(project_root / 'static'),
-           static_url_path='/static')
+           template_folder=str(react_build_folder),
+           static_folder=str(react_build_folder),
+           static_url_path='/')
 
 # Configure CORS with more restrictive settings
 CORS(app, resources={
@@ -129,14 +132,14 @@ def token_required(f):
 def home():
     """Serve React frontend"""
     try:
-        index_path = os.path.join(backend_root, 'static', 'frontend', 'index.html')
+        index_path = react_build_folder / 'index.html'
         logger.info(f"Attempting to serve index.html from: {index_path}")
-        logger.info(f"File exists: {os.path.exists(index_path)}")
-        logger.info(f"Project root: {project_root}")
-        if not os.path.exists(index_path):
+        logger.info(f"File exists: {index_path.exists()}")
+        logger.info(f"React build folder: {react_build_folder}")
+        if not index_path.exists():
             logger.error(f"index.html not found at {index_path}")
             return jsonify({"error": "Frontend not found", "path": str(index_path)}), 500
-        return send_file(index_path)
+        return send_file(str(index_path))
     except Exception as e:
         logger.error(f"Error serving frontend: {str(e)}")
         return jsonify({"error": str(e)}), 500
@@ -149,12 +152,12 @@ def serve_frontend(path):
         return {'error': 'API endpoint not found'}, 404
     
     # Try to serve static assets first
-    static_file_path = os.path.join(backend_root, 'static', 'frontend', path)
-    if os.path.exists(static_file_path) and os.path.isfile(static_file_path):
-        return send_file(static_file_path)
+    static_file_path = react_build_folder / path
+    if static_file_path.exists() and static_file_path.is_file():
+        return send_file(str(static_file_path))
     
     # For client-side routing, serve index.html
-    return send_file(os.path.join(backend_root, 'static', 'frontend', 'index.html'))
+    return send_file(str(react_build_folder / 'index.html'))
 
 @app.route('/test_visualization.html')
 def test_visualization():
