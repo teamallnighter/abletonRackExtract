@@ -22,6 +22,7 @@ export interface Chain {
 
 export interface RackAnalysis {
   rack_name: string;
+  rack_type?: string;
   chains: Chain[];
   macro_controls: MacroControl[];
   user_info?: {
@@ -34,6 +35,7 @@ export interface RackDocument {
   _id: string;
   filename: string;
   rack_name: string;
+  rack_type?: string;
   description?: string;
   producer_name?: string;
   created_at: string;

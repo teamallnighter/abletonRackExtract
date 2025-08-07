@@ -3,6 +3,7 @@ import { useRackQuery } from '../hooks/useRackQuery';
 import { useRackStore } from '../stores/rackStore';
 import LazyRackVisualization from '../components/visualization/LazyRackVisualization';
 import RackDetailsPanel from '../components/visualization/RackDetailsPanel';
+import { getRackTypeInfo, getRackTypeBadgeClasses, getRackTypeHeaderClasses } from '../utils/rackTypes';
 
 const RackVisualizationPage = () => {
   const { rackId } = useParams<{ rackId: string }>();
@@ -46,15 +47,24 @@ const RackVisualizationPage = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
+      <div className={`rounded-lg shadow-sm border p-6 ${getRackTypeHeaderClasses(currentRack.rack_type || currentRack.analysis?.rack_type)}`}>
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              {currentRack.rack_name}
-            </h1>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-2xl font-bold text-gray-900">
+                {currentRack.rack_name}
+              </h1>
+              <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium border ${getRackTypeBadgeClasses(currentRack.rack_type || currentRack.analysis?.rack_type)}`}>
+                <span>{getRackTypeInfo(currentRack.rack_type || currentRack.analysis?.rack_type).icon}</span>
+                {getRackTypeInfo(currentRack.rack_type || currentRack.analysis?.rack_type).displayName}
+              </span>
+            </div>
             {currentRack.description && (
               <p className="text-gray-600 mb-2">{currentRack.description}</p>
             )}
+            <p className="text-sm text-gray-500 mb-2">
+              {getRackTypeInfo(currentRack.rack_type || currentRack.analysis?.rack_type).description}
+            </p>
             {currentRack.producer_name && (
               <p className="text-sm text-blue-600">by {currentRack.producer_name}</p>
             )}

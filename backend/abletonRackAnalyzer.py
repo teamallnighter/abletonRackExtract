@@ -19,6 +19,34 @@ def decompress_and_parse_ableton_file(file_path):
         print(f"❌ Error: {e}")
         return None
 
+def detect_rack_type_and_device(xml_root):
+    """Detect the type of rack and return the main device element and rack type"""
+    group_preset = xml_root.find(".//GroupDevicePreset")
+    if group_preset is not None:
+        device_container = group_preset.find("Device")
+        if device_container is not None:
+            # Check for different rack types
+            for child in device_container:
+                if child.tag in ["AudioEffectGroupDevice", "InstrumentGroupDevice", "MidiEffectGroupDevice"]:
+                    return child.tag, child
+    
+    # Try alternate paths if main path doesn't work
+    for rack_type in ["AudioEffectGroupDevice", "InstrumentGroupDevice", "MidiEffectGroupDevice"]:
+        device = xml_root.find(f".//{rack_type}")
+        if device is not None:
+            return rack_type, device
+    
+    return None, None
+
+def get_branch_preset_type(rack_type):
+    """Get the corresponding branch preset type for a rack type"""
+    branch_type_map = {
+        "AudioEffectGroupDevice": "AudioEffectBranchPreset",
+        "InstrumentGroupDevice": "InstrumentBranchPreset", 
+        "MidiEffectGroupDevice": "MidiEffectBranchPreset"
+    }
+    return branch_type_map.get(rack_type)
+
 def parse_chains_and_devices(xml_root, filename=None, verbose=False):
     """Parse the main rack structure based on actual Ableton XML format"""
     # Always use filename as rack name
@@ -31,13 +59,27 @@ def parse_chains_and_devices(xml_root, filename=None, verbose=False):
         "chains": []
     }
     
-    # Find the main AudioEffectGroupDevice
-    device_path = ".//GroupDevicePreset/Device/AudioEffectGroupDevice"
-    main_device = xml_root.find(device_path)
+    # Dynamic rack type detection
+    rack_type, main_device = detect_rack_type_and_device(xml_root)
+    
+    if verbose:
+        print(f"🔍 Detected rack type: {rack_type}")
+    
+    # Add rack type to the result
+    rack_info["rack_type"] = rack_type
+    
+    # Error handling for unsupported rack types
+    if rack_type is None:
+        if verbose:
+            print("⚠️  Warning: Unable to detect rack type. This may be an unsupported rack format.")
+        rack_info["parsing_errors"] = ["Unknown rack type - unable to detect AudioEffectGroupDevice, InstrumentGroupDevice, or MidiEffectGroupDevice"]
+        return rack_info
     
     if main_device is None:
-        # Try alternate path
-        main_device = xml_root.find(".//AudioEffectGroupDevice")
+        if verbose:
+            print(f"⚠️  Warning: Detected rack type {rack_type} but could not find main device.")
+        rack_info["parsing_errors"] = [f"Found rack type {rack_type} but could not locate main device element"]
+        return rack_info
     
     if main_device is not None:
         # We're no longer overriding with UserName - filename takes precedence
@@ -59,18 +101,45 @@ def parse_chains_and_devices(xml_root, filename=None, verbose=False):
         # Look for chains in BranchPresets at the GroupDevicePreset level
         # This is where chains are actually stored, not in the Branches element
         branch_presets = xml_root.find(".//GroupDevicePreset/BranchPresets")
-        if branch_presets is not None:
-            # Parse AudioEffectBranchPreset elements
-            audio_branches = branch_presets.findall("AudioEffectBranchPreset")
-            for idx, branch_preset in enumerate(audio_branches):
-                chain_info = parse_single_chain_branch(branch_preset, idx)
-                if chain_info:
-                    rack_info["chains"].append(chain_info)
+        if branch_presets is not None and rack_type is not None:
+            # Get the appropriate branch preset type for this rack type
+            branch_preset_type = get_branch_preset_type(rack_type)
+            if branch_preset_type:
+                branches = branch_presets.findall(branch_preset_type)
+                if verbose:
+                    print(f"🔍 Found {len(branches)} {branch_preset_type} elements")
+                    
+                if len(branches) == 0:
+                    if verbose:
+                        print(f"⚠️  Warning: No {branch_preset_type} elements found for {rack_type}")
+                    rack_info.setdefault("parsing_warnings", []).append(f"No chains found - expected {branch_preset_type} elements")
+                
+                for idx, branch_preset in enumerate(branches):
+                    try:
+                        chain_info = parse_single_chain_branch(branch_preset, idx)
+                        if chain_info:
+                            rack_info["chains"].append(chain_info)
+                        else:
+                            if verbose:
+                                print(f"⚠️  Warning: Failed to parse chain {idx + 1}")
+                            rack_info.setdefault("parsing_warnings", []).append(f"Failed to parse chain {idx + 1}")
+                    except Exception as e:
+                        if verbose:
+                            print(f"❌ Error parsing chain {idx + 1}: {e}")
+                        rack_info.setdefault("parsing_errors", []).append(f"Error parsing chain {idx + 1}: {str(e)}")
+            else:
+                if verbose:
+                    print(f"⚠️  Warning: Unknown branch preset type for rack type {rack_type}")
+                rack_info.setdefault("parsing_errors", []).append(f"Unknown branch preset type for rack type {rack_type}")
+        else:
+            if branch_presets is None and verbose:
+                print("⚠️  Warning: No BranchPresets element found")
+                rack_info.setdefault("parsing_warnings", []).append("No BranchPresets element found - rack may not contain chains")
     
     return rack_info
 
 def parse_single_chain_branch(branch_preset, chain_index=0):
-    """Parse a single AudioEffectBranchPreset"""
+    """Parse a single branch preset (AudioEffect, Instrument, or MidiEffect)"""
     chain_info = {
         "name": f"Chain {chain_index + 1}",  # Default name based on index
         "is_soloed": False,

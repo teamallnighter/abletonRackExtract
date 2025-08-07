@@ -125,6 +125,7 @@ class MongoDB:
             document = {
                 'filename': filename,
                 'rack_name': rack_info.get('rack_name', 'Unknown'),
+                'rack_type': rack_info.get('rack_type', 'Unknown'),  # Add rack type from analyzer
                 'analysis': rack_info,
                 'created_at': datetime.utcnow(),
                 'stats': {
