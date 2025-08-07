@@ -207,27 +207,7 @@ export const convertRackToFlow = (analysis: RackAnalysis): { nodes: RackFlowNode
     });
   });
 
-  // ... existing code ...
-});
-  });
-
-// ... existing code ...
-    });
-  });
-
   return { nodes, edges };
-};
-
-// Utility to get device color based on type
-// ... existing code ...
-
-
-return { nodes, edges };
-};
-
-// Utility to get device color based on type
-// ... existing code ...
-
 };
 
 // Utility to get device color based on type
