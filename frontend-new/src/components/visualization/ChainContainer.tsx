@@ -29,8 +29,7 @@ const ChainContainer = memo(({ data }: NodeProps & { data: ChainContainerData })
         borderStyle: 'solid',
         borderRadius: '12px',
         position: 'relative' as const,
-        cursor: 'move', // Make it clear this is draggable
-        pointerEvents: 'all' as const, // Enable dragging
+        pointerEvents: 'none' as const, // Static - no interaction needed
     };
 
     return (
@@ -60,12 +59,9 @@ const ChainContainer = memo(({ data }: NodeProps & { data: ChainContainerData })
                 </div>
             </div>
 
-            {/* Chain Body - where devices will be positioned */}
+            {/* Chain Body - visual container for devices */}
             <div className="absolute inset-0 top-12 p-2">
-                {/* This space contains the devices */}
-                <div className="text-xs text-gray-500 text-center mt-4 opacity-75">
-                    Drag to move all devices in this chain
-                </div>
+                {/* Pure visual grouping - no interaction needed */}
             </div>
         </div>
     );

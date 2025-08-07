@@ -43,46 +43,8 @@ const RackFlowVisualizationInner = () => {
     return { initialNodes: nodes, initialEdges: edges };
   }, [currentRack]);
 
-  const [nodes, setNodesState, onNodesChange] = useNodesState(initialNodes as unknown as Node[]);
+  const [nodes, , onNodesChange] = useNodesState(initialNodes as unknown as Node[]);
   const [, setEdges, onEdgesChange] = useEdgesState(initialEdges as Edge[]);
-
-  // Custom node change handler to implement parent-child movement
-  const handleNodesChange = useCallback((changes: any[]) => {
-    // Apply the changes first
-    onNodesChange(changes);
-
-    // Check for position changes on chain containers
-    changes.forEach(change => {
-      if (change.type === 'position' && change.position) {
-        setNodesState(currentNodes => {
-          const node = currentNodes.find(n => n.id === change.id);
-
-          // If a chain container moved, move all its child devices
-          if (node?.type === 'chainContainer') {
-            const chainId = node.id;
-            const deltaX = change.position.x - (node.position?.x || 0);
-            const deltaY = change.position.y - (node.position?.y || 0);
-
-            return currentNodes.map(n => {
-              // Move devices that belong to this chain
-              if (n.type === 'device' && n.data?.chainId === chainId) {
-                return {
-                  ...n,
-                  position: {
-                    x: (n.position?.x || 0) + deltaX,
-                    y: (n.position?.y || 0) + deltaY,
-                  },
-                };
-              }
-              return n;
-            });
-          }
-
-          return currentNodes;
-        });
-      }
-    });
-  }, [onNodesChange, setNodesState]);
 
   // Performance optimizations
   const { optimizedEdges, performanceSettings, isPerformanceMode } = usePerformanceOptimizations({
@@ -153,7 +115,6 @@ const RackFlowVisualizationInner = () => {
       <ReactFlow
         nodes={nodes}
         edges={optimizedEdges as Edge[]}
-        onNodesChange={handleNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
@@ -165,6 +126,9 @@ const RackFlowVisualizationInner = () => {
         maxZoom={2}
         snapToGrid={isPerformanceMode}
         snapGrid={[10, 10]}
+        nodesDraggable={false}
+        nodesConnectable={false}
+        elementsSelectable={true}
       >
         <Controls />
         <MiniMap />
