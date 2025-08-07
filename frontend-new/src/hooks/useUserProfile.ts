@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AuthService } from '../services/auth';
 import type { User } from '../types/auth';
+import { useAuth } from '../contexts/AuthContext';
 
 interface UserStats {
   uploadsCount: number;
@@ -27,25 +28,34 @@ interface UserRack {
 }
 
 export const useUserProfile = () => {
+  const { isAuthenticated } = useAuth();
   return useQuery({
     queryKey: ['user', 'profile'],
-    queryFn: async (): Promise<User> => {
+    queryFn: async (): Promise<User | null> => {
+      if (!isAuthenticated) return null;
       const response = await fetch('/api/user/profile', {
         headers: AuthService.getAuthHeaders(),
       });
       if (!response.ok) {
+        // It's okay for this to fail if the user is not logged in
+        if (response.status === 401) {
+          return null;
+        }
         throw new Error('Failed to fetch profile');
       }
       return response.json();
     },
+    enabled: isAuthenticated, // Only run if authenticated
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
 
 export const useUserStats = () => {
+  const { isAuthenticated } = useAuth();
   return useQuery({
     queryKey: ['user', 'stats'],
-    queryFn: async (): Promise<UserStats> => {
+    queryFn: async (): Promise<UserStats | null> => {
+      if (!isAuthenticated) return null;
       console.log('Fetching user stats...');
       const response = await fetch('/api/user/stats', {
         headers: AuthService.getAuthHeaders(),
@@ -58,6 +68,7 @@ export const useUserStats = () => {
       console.log('User stats response:', data);
       return data.stats;
     },
+    enabled: isAuthenticated,
     staleTime: 1000 * 60 * 5,
     retry: 2,
     retryDelay: 1000,
@@ -65,9 +76,11 @@ export const useUserStats = () => {
 };
 
 export const useUserRacks = () => {
+  const { isAuthenticated } = useAuth();
   return useQuery({
     queryKey: ['user', 'racks'],
     queryFn: async (): Promise<UserRack[]> => {
+      if (!isAuthenticated) return [];
       console.log('Fetching user racks...');
       const response = await fetch('/api/user/racks', {
         headers: AuthService.getAuthHeaders(),
@@ -80,6 +93,7 @@ export const useUserRacks = () => {
       console.log('User racks response:', data);
       return data.racks || [];
     },
+    enabled: isAuthenticated,
     staleTime: 1000 * 60 * 2,
     retry: 2,
     retryDelay: 1000,
@@ -87,9 +101,11 @@ export const useUserRacks = () => {
 };
 
 export const useUserFavorites = () => {
+  const { isAuthenticated } = useAuth();
   return useQuery({
     queryKey: ['user', 'favorites'],
     queryFn: async (): Promise<UserRack[]> => {
+      if (!isAuthenticated) return [];
       const response = await fetch('/api/user/favorites', {
         headers: AuthService.getAuthHeaders(),
       });
@@ -99,6 +115,7 @@ export const useUserFavorites = () => {
       const data = await response.json();
       return data.favorites || [];
     },
+    enabled: isAuthenticated,
     staleTime: 1000 * 60 * 2,
     retry: 2,
     retryDelay: 1000,
