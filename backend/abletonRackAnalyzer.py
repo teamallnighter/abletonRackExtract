@@ -241,21 +241,25 @@ def parse_device(device_elem, parent_preset=None):
         "Velocity": "Velocity"
     }
     
+    # Check for custom device name (UserName) first
+    user_name = device_elem.find("UserName")
+    custom_name = None
+    if user_name is not None and user_name.get("Value"):
+        custom_name = user_name.get("Value")
+    
+    # Use custom name if available, otherwise use mapped device type name
     device_info = {
         "type": device_type,
-        "name": device_type_map.get(device_type, device_type),
+        "name": custom_name if custom_name else device_type_map.get(device_type, device_type),
         "is_on": True
     }
     
-    # Store preset name separately - NEVER replace the device type
-    user_name = device_elem.find("UserName")
-    if user_name is not None and user_name.get("Value"):
-        preset_name = user_name.get("Value")
-        # Only append preset name if it's not the same as device name
-        if preset_name and preset_name.lower() != device_info["name"].lower():
-            device_info["preset_name"] = preset_name
-            # Optionally show preset in parentheses
-            # device_info["name"] = f"{device_info['name']} ({preset_name})"
+    # Store preset name separately if it differs from the display name
+    if custom_name:
+        # If we have a custom name, the original device type becomes the preset
+        original_device_name = device_type_map.get(device_type, device_type)
+        if original_device_name.lower() != custom_name.lower():
+            device_info["preset_name"] = original_device_name
     
     # Check if device is on
     on_elem = device_elem.find("On/Manual")

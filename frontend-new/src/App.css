@@ -94,3 +94,88 @@ textarea::placeholder {
   color: #6b7280 !important;
   opacity: 1;
 }
+
+/* Mobile optimizations for the new layout */
+@media (max-width: 1023px) {
+  /* Stack layout vertically on mobile/tablet */
+  .rack-layout-mobile {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto auto;
+  }
+  
+  /* Reduce visualization height on mobile */
+  .rack-visualization-mobile {
+    height: 400px;
+    min-height: 400px;
+  }
+  
+  /* Compact sidebar sections */
+  .sidebar-section-mobile {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  
+  /* Better touch targets */
+  .macro-control-mobile {
+    min-height: 44px;
+    padding: 0.75rem;
+  }
+  
+  /* Simplified chain display */
+  .chain-item-mobile {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Tablet-specific adjustments */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .rack-visualization-tablet {
+    height: 500px;
+    min-height: 500px;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .react-flow__node,
+  .react-flow__edge,
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .react-flow__node {
+    border: 2px solid currentColor !important;
+    background: white !important;
+  }
+  
+  .react-flow__edge-path {
+    stroke: currentColor !important;
+    stroke-width: 3px !important;
+  }
+  
+  /* Ensure all text has maximum contrast */
+  * {
+    color: #000000 !important;
+  }
+  
+  .bg-gray-50,
+  .bg-gray-100,
+  .bg-gray-200 {
+    background-color: #ffffff !important;
+    border: 1px solid #000000 !important;
+  }
+}
+
+/* Focus improvements for keyboard navigation */
+.react-flow__node:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid #2563eb !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 1px #ffffff, 0 0 0 4px #2563eb !important;
+}

@@ -141,7 +141,11 @@ const RackDetailsPanel = () => {
         </div>
         
         <div className="space-y-3">
+          {/* Macro Title and Name */}
           <div className="text-center">
+            <div className="text-lg font-semibold text-gray-900 mb-1">
+              {macro.name || `Macro ${macro.index + 1}`}
+            </div>
             <div className="text-2xl font-bold text-gray-900 mb-1">
               {percentage}%
             </div>
@@ -163,9 +167,33 @@ const RackDetailsPanel = () => {
             <div className="text-right">127</div>
           </div>
           
-          <div className="text-sm text-gray-600">
-            <span className="font-medium">Raw Value:</span> {macro.value}/127
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-500">Raw Value:</span>
+              <span className="font-medium text-gray-900">{macro.value}/127</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Index:</span>
+              <span className="font-medium text-gray-900">{macro.index + 1}</span>
+            </div>
+            {macro.name && (
+              <div className="flex justify-between">
+                <span className="text-gray-500">Custom Name:</span>
+                <span className="font-medium text-gray-900 text-right ml-2" title={macro.name}>
+                  {macro.name.length > 20 ? `${macro.name.slice(0, 20)}...` : macro.name}
+                </span>
+              </div>
+            )}
           </div>
+          
+          {/* Note about missing configuration data */}
+          {!macro.name && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <div className="text-xs text-blue-700">
+                <strong>Note:</strong> No custom configuration found. Custom macro names and descriptions from setup may not be captured in the current analysis.
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );

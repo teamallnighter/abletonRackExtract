@@ -34,8 +34,20 @@ const MacroNode = memo(({ data, selected }: NodeProps & { data: MacroNodeData })
       onTouchEnd={() => setIsHovered(false)}
     >
       <div className="flex flex-col items-center justify-center h-full">
-        <div className="text-xs font-medium text-gray-900 text-center truncate w-full mb-1">
-          {data.label}
+        <div 
+          className="text-xs font-medium text-gray-900 text-center truncate w-full mb-1 relative group cursor-help"
+          title={macro.name || data.label || `Macro ${macro.index + 1}`}
+        >
+          {macro.name || data.label || `M${macro.index + 1}`}
+          {/* Tooltip for full title on hover */}
+          {(macro.name || data.label) && (macro.name || data.label).length > 8 && (
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50 pointer-events-none">
+              <div className="bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap shadow-lg">
+                {macro.name || data.label}
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+              </div>
+            </div>
+          )}
         </div>
         
         <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center mb-1">

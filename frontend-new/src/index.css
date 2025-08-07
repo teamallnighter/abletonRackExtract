@@ -3,9 +3,9 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color-scheme: light;
+  color: #213547;
+  background-color: #ffffff;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -84,6 +84,18 @@ button:focus-visible {
   }
 }
 
+/* Force light mode styling for the application */
+:root {
+  color: #213547 !important;
+  background-color: #ffffff !important;
+}
+
+/* Override any dark mode styles */
+html, body {
+  color: #213547 !important;
+  background-color: #ffffff !important;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
@@ -95,4 +107,17 @@ button:focus-visible {
   /* button {
     background-color: #f9f9f9;
   } */
+}
+
+/* Ensure all text in the app has proper contrast */
+.react-root *, 
+#root *, 
+.app * {
+  color: inherit;
+}
+
+/* Fix any inherited white text issues */
+div, span, p, h1, h2, h3, h4, h5, h6, 
+button, input, textarea, select, label {
+  color: inherit;
 }

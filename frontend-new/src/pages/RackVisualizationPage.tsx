@@ -67,87 +67,97 @@ const RackVisualizationPage = () => {
         </div>
       </div>
 
-      {/* Main Content Grid - Responsive Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-        {/* React Flow Visualization */}
-        <div className="lg:col-span-2 xl:col-span-3 order-1">
-          <div className="bg-white rounded-lg shadow-sm border">
+      {/* Main Content Layout - Efficient Space Utilization */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:gap-6 min-h-[500px] lg:min-h-[600px]">
+        {/* React Flow Visualization - 60% width */}
+        <div className="lg:col-span-3 order-1">
+          <div className="bg-white rounded-lg shadow-sm border h-full">
             <div className="p-4 md:p-6 border-b">
               <h2 className="text-lg font-semibold text-gray-900">Rack Visualization</h2>
               <p className="text-gray-600 text-sm hidden sm:block">Interactive flowchart diagram - click nodes for details</p>
               <p className="text-gray-600 text-sm sm:hidden">Tap nodes for details</p>
             </div>
-            <div className="p-2 md:p-6">
+            <div className="p-2 md:p-6 h-[calc(100%-80px)]">
               <LazyRackVisualization />
             </div>
           </div>
         </div>
         
-        {/* Details Panel - Mobile First */}
-        <div className="lg:col-span-1 xl:col-span-1 order-2 lg:order-2">
-          <RackDetailsPanel />
-        </div>
-      </div>
-
-      {/* Rack Analysis Details */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Chains */}
-        <div className="bg-white rounded-lg shadow-sm border">
-          <div className="p-6 border-b">
-            <h3 className="text-lg font-semibold text-gray-900">Chains</h3>
+        {/* Right Sidebar - 40% width with stacked components */}
+        <div className="lg:col-span-2 order-2 lg:order-2 space-y-3 lg:space-y-4">
+          {/* Selected Node Details Panel - Top Priority */}
+          <div className="bg-white rounded-lg shadow-sm border">
+            <RackDetailsPanel />
           </div>
-          <div className="p-6 space-y-4">
-            {currentRack.analysis.chains.map((chain, index) => (
-              <div key={index} className="border rounded-lg p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <h4 className="font-medium text-gray-900">
-                    {chain.name || `Chain ${index + 1}`}
-                  </h4>
-                  {chain.is_soloed && (
-                    <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">
-                      Soloed
-                    </span>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  {chain.devices.map((device, deviceIndex) => (
-                    <div key={deviceIndex} className="flex justify-between items-center text-sm">
-                      <span className={`${device.is_on ? 'text-gray-900' : 'text-gray-400'}`}>
-                        {device.name}
-                      </span>
-                      <span className={`w-2 h-2 rounded-full ${device.is_on ? 'bg-green-400' : 'bg-gray-300'}`}></span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Macro Controls */}
-        <div className="bg-white rounded-lg shadow-sm border">
-          <div className="p-6 border-b">
-            <h3 className="text-lg font-semibold text-gray-900">Macro Controls</h3>
-          </div>
-          <div className="p-6 space-y-3">
-            {currentRack.analysis.macro_controls.map((macro) => (
-              <div key={macro.index} className="flex justify-between items-center">
-                <span className="text-gray-900">
-                  {macro.name || `Macro ${macro.index + 1}`}
-                </span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-20 bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full" 
-                      style={{ width: `${(macro.value / 127) * 100}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-sm text-gray-500 w-8">
-                    {Math.round((macro.value / 127) * 100)}
+          
+          {/* Macro Controls - Quick Access */}
+          <div className="bg-white rounded-lg shadow-sm border">
+            <div className="p-3 lg:p-4 border-b">
+              <h3 className="text-base lg:text-lg font-semibold text-gray-900">Macro Controls</h3>
+            </div>
+            <div className="p-3 lg:p-4 space-y-2 lg:space-y-3 max-h-48 lg:max-h-64 overflow-y-auto">
+              {currentRack.analysis.macro_controls.map((macro) => (
+                <div key={macro.index} className="flex justify-between items-center">
+                  <span className="text-gray-900 text-sm font-medium truncate pr-2" title={macro.name || `Macro ${macro.index + 1}`}>
+                    {macro.name || `Macro ${macro.index + 1}`}
                   </span>
+                  <div className="flex items-center space-x-2 flex-shrink-0">
+                    <div className="w-16 bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full transition-all duration-200" 
+                        style={{ width: `${(macro.value / 127) * 100}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-xs text-gray-500 w-8 text-right">
+                      {Math.round((macro.value / 127) * 100)}%
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          </div>
+          
+          {/* Chains List - Browsable */}
+          <div className="bg-white rounded-lg shadow-sm border">
+            <div className="p-3 lg:p-4 border-b">
+              <h3 className="text-base lg:text-lg font-semibold text-gray-900">Chains</h3>
+            </div>
+            <div className="p-3 lg:p-4 space-y-2 lg:space-y-3 max-h-64 lg:max-h-80 overflow-y-auto">
+              {currentRack.analysis.chains.map((chain, index) => (
+                <div key={index} className="border rounded-lg p-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-medium text-gray-900 text-sm">
+                      {chain.name || `Chain ${index + 1}`}
+                    </h4>
+                    <div className="flex items-center space-x-2">
+                      {chain.is_soloed && (
+                        <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">
+                          Solo
+                        </span>
+                      )}
+                      <span className="text-xs text-gray-500">
+                        {chain.devices.length} devices
+                      </span>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    {chain.devices.slice(0, 3).map((device, deviceIndex) => (
+                      <div key={deviceIndex} className="flex justify-between items-center text-xs">
+                        <span className={`truncate pr-2 ${device.is_on ? 'text-gray-800' : 'text-gray-400'}`} title={device.name}>
+                          {device.name}
+                        </span>
+                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${device.is_on ? 'bg-green-400' : 'bg-gray-300'}`}></span>
+                      </div>
+                    ))}
+                    {chain.devices.length > 3 && (
+                      <div className="text-xs text-gray-400 italic">
+                        +{chain.devices.length - 3} more devices
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
