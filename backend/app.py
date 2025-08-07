@@ -269,8 +269,9 @@ def analyze_rack_initial():
             if xml_root is None:
                 return jsonify({'error': 'Failed to decompress or parse the file'}), 500
             
-            # Parse chains and devices
-            rack_info = parse_chains_and_devices(xml_root, filename, verbose=False)
+            # Parse chains and devices (enable verbose in debug mode)
+            verbose_parsing = app.debug or os.getenv('FLASK_ENV') == 'development'
+            rack_info = parse_chains_and_devices(xml_root, filename, verbose=verbose_parsing)
             if rack_info is None:
                 return jsonify({'error': 'Failed to analyze the rack structure'}), 500
             

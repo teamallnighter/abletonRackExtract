@@ -116,7 +116,7 @@ def parse_chains_and_devices(xml_root, filename=None, verbose=False):
                 
                 for idx, branch_preset in enumerate(branches):
                     try:
-                        chain_info = parse_single_chain_branch(branch_preset, idx)
+                        chain_info = parse_single_chain_branch(branch_preset, idx, 0, verbose)
                         if chain_info:
                             rack_info["chains"].append(chain_info)
                         else:
@@ -138,7 +138,7 @@ def parse_chains_and_devices(xml_root, filename=None, verbose=False):
     
     return rack_info
 
-def parse_single_chain_branch(branch_preset, chain_index=0):
+def parse_single_chain_branch(branch_preset, chain_index=0, depth=0, verbose=False):
     """Parse a single branch preset (AudioEffect, Instrument, or MidiEffect)"""
     chain_info = {
         "name": f"Chain {chain_index + 1}",  # Default name based on index
@@ -168,15 +168,21 @@ def parse_single_chain_branch(branch_preset, chain_index=0):
                 # Get the first child element (the actual device)
                 for child in device:
                     # Pass the device_preset element for nested rack context
-                    device_info = parse_device(child, device_preset)
+                    device_info = parse_device(child, device_preset, depth, verbose)
                     if device_info:
                         chain_info["devices"].append(device_info)
     
     return chain_info
 
-def parse_device(device_elem, parent_preset=None):
+def parse_device(device_elem, parent_preset=None, depth=0, verbose=False):
     """Parse a single device element"""
     device_type = device_elem.tag
+    
+    # Prevent infinite recursion by limiting depth
+    if depth > 10:
+        if verbose:
+            print(f"⚠️  Warning: Maximum nesting depth reached at {device_type}")
+        return None
     
     # Map device types to friendly names - Complete Ableton Live 12 device list
     device_type_map = {
@@ -336,19 +342,48 @@ def parse_device(device_elem, parent_preset=None):
         device_info["is_on"] = on_elem.get("Value") == "true"
     
     # If this is a nested rack, parse its chains
-    if device_type in ["AudioEffectGroupDevice", "InstrumentGroupDevice", "MidiEffectGroupDevice"] and parent_preset is not None:
+    if device_type in ["AudioEffectGroupDevice", "InstrumentGroupDevice", "MidiEffectGroupDevice"]:
         nested_chains = []
-        # For nested racks, BranchPresets is at the same level as Device in GroupDevicePreset
-        if parent_preset.tag == "GroupDevicePreset":
-            branch_presets = parent_preset.find("BranchPresets")
-            if branch_presets is not None:
-                # Get the appropriate branch preset type for this nested rack
-                nested_branch_type = get_branch_preset_type(device_type)
-                if nested_branch_type:
-                    for idx, branch_preset in enumerate(branch_presets.findall(nested_branch_type)):
-                        chain_info = parse_single_chain_branch(branch_preset, idx)
-                        if chain_info:
-                            nested_chains.append(chain_info)
+        branch_presets = None
+        
+        if verbose:
+            print(f"🔍 Found nested rack: {device_type} at depth {depth}")
+        
+        # First, try to find BranchPresets within the device element itself
+        # This is common for InstrumentGroupDevice structures
+        branch_presets = device_elem.find("BranchPresets")
+        if branch_presets is not None and verbose:
+            print(f"✅ Found BranchPresets within {device_type} element")
+        
+        # If not found and we have a parent preset, try the parent level
+        # This is the original logic for AudioEffectGroupDevice
+        if branch_presets is None and parent_preset is not None:
+            if parent_preset.tag == "GroupDevicePreset":
+                branch_presets = parent_preset.find("BranchPresets")
+                if branch_presets is not None and verbose:
+                    print(f"✅ Found BranchPresets at parent level for {device_type}")
+        
+        if branch_presets is not None:
+            # Get the appropriate branch preset type for this nested rack
+            nested_branch_type = get_branch_preset_type(device_type)
+            if nested_branch_type:
+                nested_branches = branch_presets.findall(nested_branch_type)
+                if verbose:
+                    print(f"🔍 Found {len(nested_branches)} {nested_branch_type} elements in nested {device_type}")
+                
+                for idx, branch_preset in enumerate(nested_branches):
+                    chain_info = parse_single_chain_branch(branch_preset, idx, depth + 1, verbose)
+                    if chain_info:
+                        nested_chains.append(chain_info)
+                        if verbose:
+                            print(f"✅ Parsed nested chain {idx + 1}: {chain_info.get('name', 'Unnamed')} with {len(chain_info.get('devices', []))} devices")
+            else:
+                if verbose:
+                    print(f"⚠️  Warning: Unknown branch preset type for nested {device_type}")
+        else:
+            if verbose:
+                print(f"⚠️  Warning: No BranchPresets found for nested {device_type}")
+        
         device_info["chains"] = nested_chains
     
     return device_info
@@ -387,7 +422,8 @@ def export_analysis_to_json(rack_info, original_file_path, output_folder="."):
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
+        verbose = len(sys.argv) > 2 and sys.argv[2] == "--verbose"
         root = decompress_and_parse_ableton_file(sys.argv[1])
         if root is not None:
-            rack_info = parse_chains_and_devices(root, sys.argv[1])
+            rack_info = parse_chains_and_devices(root, sys.argv[1], verbose=verbose)
             print(json.dumps(rack_info, indent=2))
