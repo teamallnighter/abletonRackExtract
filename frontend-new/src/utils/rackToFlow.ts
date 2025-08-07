@@ -211,31 +211,16 @@ export const convertRackToFlow = (analysis: RackAnalysis): { nodes: RackFlowNode
 });
   });
 
-// Create macro control nodes
-// const macroStartY = 50;
-// const macroSpacing = 80;
+// ... existing code ...
+    });
+  });
 
-// analysis.macro_controls.forEach((macro, index) => {
-//   const macroNodeId = getNextId();
+  return { nodes, edges };
+};
 
-//   nodes.push({
-//     id: macroNodeId,
-//     type: 'macro',
-//     position: {
-//       x: -200,
-//       y: macroStartY + (index * macroSpacing)
-//     },
-//     data: {
-//       label: macro.name || `Macro ${macro.index + 1}`,
-//       type: 'macro',
-//       data: macro,
-//     }
-//   });
+// Utility to get device color based on type
+// ... existing code ...
 
-//   // TODO: Add macro control mappings to device parameters
-//   // This would require more detailed analysis of the macro mappings
-//   // from the backend to know which devices/parameters are controlled
-// });
 
 return { nodes, edges };
 };
