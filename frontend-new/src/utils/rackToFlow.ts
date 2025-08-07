@@ -57,73 +57,85 @@ export const convertRackToFlow = (analysis: RackAnalysis): { nodes: RackFlowNode
     let previousDeviceId = chainNodeId;
     
     chain.devices.forEach((device) => {
-      const deviceNodeId = getNextId();
-      
-      // Position devices vertically below chain
-      const deviceX = chainX + (CHAIN_WIDTH - 150) / 2; // Center devices in chain
-      
-      nodes.push({
-        id: deviceNodeId,
-        type: 'device',
-        position: { x: deviceX, y: deviceY },
-        data: {
-          label: device.name,
-          type: 'device',
-          data: device,
-          chainId: chainNodeId,
-          chainIndex: chainIndex,
-          chainName: chain.name || `Chain ${chainIndex + 1}`,
-          chainColor: getChainColor(chainIndex),
-        }
-      });
-      
-      // Create edge from previous device/chain to current device
-      edges.push({
-        id: `edge-${previousDeviceId}-${deviceNodeId}`,
-        source: previousDeviceId,
-        target: deviceNodeId,
-        type: 'smoothstep',
-        animated: device.is_on,
-        style: { 
-          stroke: device.is_on ? '#10b981' : '#9ca3af',
-          strokeWidth: device.is_on ? 3 : 2 
-        },
-      });
-      
-      previousDeviceId = deviceNodeId;
-      deviceY += DEVICE_SPACING;
-      
-      // Handle nested racks (recursive)
+      // Check if this device has nested chains (Instrument/MIDI racks)
       if (device.chains && device.chains.length > 0) {
-        device.chains.forEach((nestedChain, nestedIndex) => {
-          const nestedChainId = getNextId();
-          const nestedX = deviceX + 250 + (nestedIndex * 200);
-          const nestedY = deviceY;
-          
-          nodes.push({
-            id: nestedChainId,
-            type: 'chain',
-            position: { x: nestedX, y: nestedY },
-            data: {
-              label: nestedChain.name || `Nested Chain ${nestedIndex + 1}`,
-              type: 'chain',
-              data: nestedChain,
-            }
-          });
-          
-          // Connect device to nested chain
-          edges.push({
-            id: `edge-${deviceNodeId}-${nestedChainId}`,
-            source: deviceNodeId,
-            target: nestedChainId,
-            type: 'smoothstep',
-            style: { 
-              stroke: '#8b5cf6',
-              strokeWidth: 2,
-              strokeDasharray: '5,5'
-            },
+        // For nested racks, show the individual devices instead of the container
+        device.chains.forEach((nestedChain) => {
+          nestedChain.devices.forEach((nestedDevice) => {
+            const nestedDeviceNodeId = getNextId();
+            
+            // Position devices vertically below chain
+            const deviceX = chainX + (CHAIN_WIDTH - 150) / 2; // Center devices in chain
+            
+            nodes.push({
+              id: nestedDeviceNodeId,
+              type: 'device',
+              position: { x: deviceX, y: deviceY },
+              data: {
+                label: nestedDevice.name,
+                type: 'device',
+                data: nestedDevice,
+                chainId: chainNodeId,
+                chainIndex: chainIndex,
+                chainName: chain.name || `Chain ${chainIndex + 1}`,
+                chainColor: getChainColor(chainIndex),
+              }
+            });
+            
+            // Create edge from previous device/chain to current device
+            edges.push({
+              id: `edge-${previousDeviceId}-${nestedDeviceNodeId}`,
+              source: previousDeviceId,
+              target: nestedDeviceNodeId,
+              type: 'smoothstep',
+              animated: nestedDevice.is_on,
+              style: { 
+                stroke: nestedDevice.is_on ? '#10b981' : '#9ca3af',
+                strokeWidth: nestedDevice.is_on ? 3 : 2 
+              },
+            });
+            
+            previousDeviceId = nestedDeviceNodeId;
+            deviceY += DEVICE_SPACING;
           });
         });
+      } else {
+        // Regular device (not a nested rack)
+        const deviceNodeId = getNextId();
+        
+        // Position devices vertically below chain
+        const deviceX = chainX + (CHAIN_WIDTH - 150) / 2; // Center devices in chain
+        
+        nodes.push({
+          id: deviceNodeId,
+          type: 'device',
+          position: { x: deviceX, y: deviceY },
+          data: {
+            label: device.name,
+            type: 'device',
+            data: device,
+            chainId: chainNodeId,
+            chainIndex: chainIndex,
+            chainName: chain.name || `Chain ${chainIndex + 1}`,
+            chainColor: getChainColor(chainIndex),
+          }
+        });
+        
+        // Create edge from previous device/chain to current device
+        edges.push({
+          id: `edge-${previousDeviceId}-${deviceNodeId}`,
+          source: previousDeviceId,
+          target: deviceNodeId,
+          type: 'smoothstep',
+          animated: device.is_on,
+          style: { 
+            stroke: device.is_on ? '#10b981' : '#9ca3af',
+            strokeWidth: device.is_on ? 3 : 2 
+          },
+        });
+        
+        previousDeviceId = deviceNodeId;
+        deviceY += DEVICE_SPACING;
       }
     });
   });
